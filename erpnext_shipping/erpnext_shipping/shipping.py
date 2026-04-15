@@ -70,6 +70,8 @@ def fetch_shipping_rates(
 		shipment_prices += letmeship_prices
 
 	if bobgo_enabled:
+		# Bob Go follows the same high-level flow as the existing providers, but its
+		# rates call needs explicit pickup and delivery contact details.
 		if pickup_from_type != "Company":
 			pickup_contact = get_contact(pickup_contact_name)
 		else:
@@ -191,18 +193,27 @@ def create_shipment(
 
 	if shipment_info:
 		shipment = frappe.get_doc("Shipment", shipment)
-		shipment.db_set(
-			{
-				"service_provider": shipment_info.get("service_provider"),
-				"carrier": shipment_info.get("carrier"),
-				"carrier_service": shipment_info.get("carrier_service"),
-				"shipment_id": shipment_info.get("shipment_id"),
-				"shipment_amount": shipment_info.get("shipment_amount"),
-				"awb_number": shipment_info.get("awb_number"),
-				"tracking_url": shipment_info.get("tracking_url"),
-				"status": "Booked",
-			}
-		)
+		update_values = {
+			"service_provider": shipment_info.get("service_provider"),
+			"carrier": shipment_info.get("carrier"),
+			"carrier_service": shipment_info.get("carrier_service"),
+			"shipment_id": shipment_info.get("shipment_id"),
+			"shipment_amount": shipment_info.get("shipment_amount"),
+			"awb_number": shipment_info.get("awb_number"),
+			"tracking_url": shipment_info.get("tracking_url"),
+		}
+
+		# Bob Go submission can be asynchronous. We only mark the shipment as booked once
+		# the provider reports a successful submission, otherwise we keep the external
+		# identifiers and status detail without pretending the booking is finalized.
+		if shipment_info.get("tracking_status"):
+			update_values["tracking_status"] = shipment_info.get("tracking_status")
+		if shipment_info.get("tracking_status_info"):
+			update_values["tracking_status_info"] = shipment_info.get("tracking_status_info")
+		if shipment_info.get("submission_status") in (None, "success"):
+			update_values["status"] = "Booked"
+
+		shipment.db_set(update_values)
 
 		if delivery_notes:
 			update_delivery_note(delivery_notes=delivery_notes, shipment_info=shipment_info)
@@ -233,6 +244,7 @@ def print_shipping_label(shipment: str):
 		shipping_label = letmeship.get_label(shipment_id)
 	elif service_provider == BOBGO_PROVIDER:
 		bobgo = get_bobgo_utils()
+		# Bob Go generates the label from the tracking reference / AWB number.
 		content = bobgo.get_label(shipment_doc.awb_number)
 		shipping_label = save_label_as_attachment(shipment, content)
 	elif service_provider == SENDCLOUD_PROVIDER:
@@ -279,6 +291,7 @@ def update_tracking(shipment, service_provider, shipment_id, delivery_notes=None
 	elif service_provider == BOBGO_PROVIDER:
 		bobgo = get_bobgo_utils()
 		shipment_doc = frappe.get_doc("Shipment", shipment)
+		# Bob Go tracking lookups are keyed by tracking reference rather than shipment ID.
 		tracking_data = bobgo.get_tracking_data(shipment_doc.awb_number)
 	elif service_provider == SENDCLOUD_PROVIDER:
 		sendcloud = SendCloudUtils()

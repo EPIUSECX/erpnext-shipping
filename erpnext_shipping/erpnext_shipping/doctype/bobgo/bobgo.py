@@ -4,12 +4,15 @@
 from __future__ import annotations
 
 import json
+from base64 import b64decode
+from datetime import datetime, time, timedelta, timezone
 from typing import Any
 
 import frappe
 import requests
 from frappe import _
 from frappe.model.document import Document
+from frappe.utils import get_datetime
 from frappe.utils import cint, flt
 from frappe.utils.data import get_link_to_form
 from requests.exceptions import HTTPError
@@ -52,7 +55,10 @@ class BobGoUtils:
 		json: dict | None = None,
 		params: dict | None = None,
 		expect_json: bool = True,
+		return_response: bool = False,
 	):
+		# Keep all Bob Go HTTP concerns in one place so the carrier methods stay focused
+		# on payload mapping and response normalization.
 		response = requests.request(
 			method,
 			f"{self.base_url}/{endpoint.lstrip('/')}",
@@ -70,6 +76,9 @@ class BobGoUtils:
 			response.raise_for_status()
 		except HTTPError as exc:
 			self.raise_api_error(response, exc)
+
+		if return_response:
+			return response
 
 		if not expect_json:
 			return response.content
@@ -105,6 +114,8 @@ class BobGoUtils:
 		if not self.enabled or not self.bearer_token:
 			return []
 
+		# Bob Go expects shipment-style parcel/contact data for rate lookups, so we map
+		# the ERPNext Shipment inputs into their payload here.
 		payload = {
 			"collection_address": self.get_address_dict(pickup_address),
 			"delivery_address": self.get_address_dict(delivery_address),
@@ -122,6 +133,19 @@ class BobGoUtils:
 		try:
 			response_data = self.request("POST", "rates", json=payload)
 			rates = self.extract_rates(response_data)
+			if not rates:
+				frappe.log_error(
+					title="Bob Go Rates Debug",
+					message=json.dumps(
+						{
+							"payload": payload,
+							"response_data": response_data,
+							"extracted_rates": rates,
+						},
+						indent=2,
+						default=str,
+					),
+				)
 			return [self.get_service_dict(rate) for rate in rates]
 		except Exception:
 			show_error_alert("fetching Bob Go prices")
@@ -139,6 +163,7 @@ class BobGoUtils:
 		service_info,
 		pickup_date=None,
 	):
+		# Bob Go requires the selected provider/service level from a prior rates call.
 		payload = {
 			"collection_address": self.get_address_dict(pickup_address),
 			"collection_contact_name": self.get_contact_full_name(pickup_contact),
@@ -158,7 +183,7 @@ class BobGoUtils:
 		}
 
 		if pickup_date:
-			payload["collection_min_date"] = pickup_date
+			payload["collection_min_date"] = self.get_collection_min_date(pickup_date)
 
 		try:
 			response_data = self.request("POST", "shipments", json=payload)
@@ -198,13 +223,33 @@ class BobGoUtils:
 		}
 
 	def get_label(self, tracking_reference: str):
+		# Waybills are fetched by tracking reference, not Bob Go shipment ID.
 		tracking_references = [item.strip() for item in tracking_reference.split(",") if item.strip()]
-		return self.request(
+		response = self.request(
 			"GET",
 			"shipments/waybill",
 			params={"tracking_references": json.dumps(tracking_references)},
 			expect_json=False,
+			return_response=True,
 		)
+		content = self.extract_label_content(response, tracking_references)
+		if not content.startswith(b"%PDF"):
+			frappe.log_error(
+				title="Bob Go Label Debug",
+				message=json.dumps(
+					{
+						"tracking_references": tracking_references,
+						"status_code": response.status_code,
+						"headers": dict(response.headers),
+						"content_preview": response.text[:500],
+					},
+					indent=2,
+					default=str,
+				),
+			)
+			frappe.throw(_("Bob Go did not return a valid PDF label."), title=_("Bob Go"))
+
+		return content
 
 	def get_tracking_data(self, tracking_reference: str):
 		tracking_references = [item.strip() for item in tracking_reference.split(",") if item.strip()]
@@ -224,6 +269,8 @@ class BobGoUtils:
 				show_error_alert("updating Bob Go Shipment")
 				continue
 
+			response_data = self.normalize_tracking_response(response_data, current_reference)
+
 			awb_numbers.append(
 				response_data.get("shipment_tracking_reference")
 				or response_data.get("tracking_reference")
@@ -236,6 +283,9 @@ class BobGoUtils:
 			)
 
 			checkpoints = response_data.get("checkpoints") or []
+			# Bob Go returns the latest event first in webhook examples, and the polling
+			# endpoint mirrors that structure, so we use the first checkpoint as the most
+			# helpful status detail when one is present.
 			latest_checkpoint = checkpoints[0] if checkpoints else {}
 			tracking_status_info.append(
 				latest_checkpoint.get("message")
@@ -267,20 +317,45 @@ class BobGoUtils:
 			if isinstance(value, list):
 				return value
 
+		provider_rate_requests = response_data.get("provider_rate_requests") or []
+		rates = []
+		for provider_rate_request in provider_rate_requests:
+			if provider_rate_request.get("status") != "success":
+				continue
+
+			for response in provider_rate_request.get("responses") or []:
+				if response.get("status") and response.get("status") != "success":
+					continue
+
+				rate = frappe._dict(response)
+				rate.provider_slug = provider_rate_request.get("provider_slug")
+				rate.provider_name = provider_rate_request.get("provider_name")
+				rates.append(rate)
+
+		if rates:
+			return rates
+
 		return []
 
 	def get_service_dict(self, rate: dict):
+		# Normalize Bob Go's rate response into the same shape the existing service
+		# selector dialog already understands.
 		available_service = frappe._dict()
 		available_service.service_provider = BOBGO_PROVIDER
 		available_service.carrier = rate.get("provider_name") or rate.get("courier_name") or rate.get(
 			"provider_slug"
 		)
 		available_service.carrier_name = available_service.carrier
-		available_service.service_name = rate.get("service_name") or rate.get("service_level_code")
+		service_level = rate.get("service_level") or {}
+		available_service.service_name = (
+			rate.get("service_name") or service_level.get("name") or rate.get("service_level_code")
+		)
 		available_service.service_id = rate.get("service_code") or rate.get("id")
 		available_service.provider_slug = rate.get("provider_slug")
 		available_service.service_level_code = rate.get("service_level_code")
-		available_service.total_price = flt(rate.get("total_price") or rate.get("rate"))
+		available_service.total_price = flt(
+			rate.get("total_price") or rate.get("rate") or rate.get("rate_amount")
+		)
 		available_service.currency = rate.get("currency") or "ZAR"
 
 		if rate.get("pickup_point_location_id"):
@@ -324,6 +399,99 @@ class BobGoUtils:
 		if not status:
 			return ""
 		return status.replace("-", " ").title()
+
+	def normalize_tracking_response(self, response_data: Any, tracking_reference: str) -> dict:
+		if isinstance(response_data, dict):
+			return response_data
+
+		if isinstance(response_data, list):
+			checkpoints = [item for item in response_data if isinstance(item, dict)]
+			latest_checkpoint = checkpoints[0] if checkpoints else {}
+			return {
+				"shipment_tracking_reference": tracking_reference,
+				"tracking_reference": tracking_reference,
+				"status": latest_checkpoint.get("status"),
+				"status_friendly": latest_checkpoint.get("status_friendly"),
+				"checkpoints": checkpoints,
+			}
+
+		frappe.log_error(
+			title="Bob Go Tracking Debug",
+			message=json.dumps(
+				{
+					"tracking_reference": tracking_reference,
+					"response_data": response_data,
+				},
+				indent=2,
+				default=str,
+			),
+		)
+		return {
+			"shipment_tracking_reference": tracking_reference,
+			"tracking_reference": tracking_reference,
+			"status": "",
+			"status_friendly": "",
+			"checkpoints": [],
+		}
+
+	def extract_label_content(self, response: requests.Response, tracking_references: list[str]) -> bytes:
+		content = response.content or b""
+		if content.startswith(b"%PDF"):
+			return content
+
+		content_type = (response.headers.get("Content-Type") or "").lower()
+		if "application/json" in content_type:
+			payload = response.json()
+			for key in ("data", "content", "pdf", "file_content", "waybill"):
+				value = payload.get(key)
+				if isinstance(value, str):
+					decoded = self.decode_possible_base64(value)
+					if decoded:
+						return decoded
+
+		decoded = self.decode_possible_base64(response.text.strip())
+		if decoded:
+			return decoded
+
+		frappe.log_error(
+			title="Bob Go Label Debug",
+			message=json.dumps(
+				{
+					"tracking_references": tracking_references,
+					"status_code": response.status_code,
+					"headers": dict(response.headers),
+					"content_preview": response.text[:500],
+				},
+				indent=2,
+				default=str,
+			),
+		)
+		return content
+
+	def decode_possible_base64(self, value: str | None) -> bytes | None:
+		if not value:
+			return None
+
+		if value.startswith("data:application/pdf;base64,"):
+			value = value.split(",", 1)[1]
+
+		try:
+			decoded = b64decode(value, validate=True)
+		except Exception:
+			return None
+
+		return decoded if decoded.startswith(b"%PDF") else None
+
+	def get_collection_min_date(self, pickup_date: str) -> str:
+		# ERPNext gives us a plain date on the Shipment form, while Bob Go expects a
+		# full ISO datetime. Use 08:00 South Africa time as a sensible collection default.
+		parsed_datetime = get_datetime(pickup_date)
+		if parsed_datetime.tzinfo:
+			return parsed_datetime.isoformat()
+
+		sast = timezone(timedelta(hours=2))
+		collection_datetime = datetime.combine(parsed_datetime.date(), time(hour=8), tzinfo=sast)
+		return collection_datetime.isoformat()
 
 
 def get_bobgo_utils() -> "BobGoUtils":
