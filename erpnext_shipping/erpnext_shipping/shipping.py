@@ -9,6 +9,7 @@ from erpnext_shipping.erpnext_shipping.doctype.letmeship.letmeship import (
 	LETMESHIP_PROVIDER,
 	get_letmeship_utils,
 )
+from erpnext_shipping.erpnext_shipping.doctype.bobgo.bobgo import BOBGO_PROVIDER, get_bobgo_utils
 from erpnext_shipping.erpnext_shipping.doctype.sendcloud.sendcloud import SENDCLOUD_PROVIDER, SendCloudUtils
 from erpnext_shipping.erpnext_shipping.utils import (
 	get_address,
@@ -32,6 +33,7 @@ def fetch_shipping_rates(
 ):
 	# Return Shipping Rates for the various Shipping Providers
 	shipment_prices = []
+	bobgo_enabled = frappe.db.get_single_value("BobGo", "enabled")
 	letmeship_enabled = frappe.db.get_single_value("LetMeShip", "enabled")
 	sendcloud_enabled = frappe.db.get_single_value("SendCloud", "enabled")
 	pickup_address = get_address(pickup_address_name)
@@ -66,6 +68,30 @@ def fetch_shipping_rates(
 		)
 		letmeship_prices = match_parcel_service_type_carrier(letmeship_prices, "carrier", "service_name")
 		shipment_prices += letmeship_prices
+
+	if bobgo_enabled:
+		if pickup_from_type != "Company":
+			pickup_contact = get_contact(pickup_contact_name)
+		else:
+			pickup_contact = get_company_contact(user=pickup_contact_name)
+			pickup_contact.email_id = pickup_contact.pop("email", None)
+
+		delivery_contact = get_contact(delivery_contact_name)
+
+		bobgo = get_bobgo_utils()
+		bobgo_prices = (
+			bobgo.get_available_services(
+				pickup_address=pickup_address,
+				delivery_address=delivery_address,
+				parcels=parcels,
+				pickup_contact=pickup_contact,
+				delivery_contact=delivery_contact,
+				value_of_goods=value_of_goods,
+			)
+			or []
+		)
+		bobgo_prices = match_parcel_service_type_carrier(bobgo_prices, "carrier", "service_name")
+		shipment_prices += bobgo_prices
 
 	if sendcloud_enabled:
 		sendcloud = SendCloudUtils()
@@ -137,6 +163,20 @@ def create_shipment(
 			service_info=service_info,
 		)
 
+	if service_info["service_provider"] == BOBGO_PROVIDER:
+		bobgo = get_bobgo_utils()
+		shipment_info = bobgo.create_shipment(
+			shipment=shipment,
+			pickup_address=pickup_address,
+			delivery_address=delivery_address,
+			shipment_parcel=shipment_parcel,
+			value_of_goods=value_of_goods,
+			pickup_contact=pickup_contact,
+			delivery_contact=delivery_contact,
+			service_info=service_info,
+			pickup_date=pickup_date,
+		)
+
 	if service_info["service_provider"] == SENDCLOUD_PROVIDER:
 		sendcloud = SendCloudUtils()
 		shipment_info = sendcloud.create_shipment(
@@ -159,6 +199,7 @@ def create_shipment(
 				"shipment_id": shipment_info.get("shipment_id"),
 				"shipment_amount": shipment_info.get("shipment_amount"),
 				"awb_number": shipment_info.get("awb_number"),
+				"tracking_url": shipment_info.get("tracking_url"),
 				"status": "Booked",
 			}
 		)
@@ -190,6 +231,10 @@ def print_shipping_label(shipment: str):
 	if service_provider == LETMESHIP_PROVIDER:
 		letmeship = get_letmeship_utils()
 		shipping_label = letmeship.get_label(shipment_id)
+	elif service_provider == BOBGO_PROVIDER:
+		bobgo = get_bobgo_utils()
+		content = bobgo.get_label(shipment_doc.awb_number)
+		shipping_label = save_label_as_attachment(shipment, content)
 	elif service_provider == SENDCLOUD_PROVIDER:
 		sendcloud = SendCloudUtils()
 		shipping_label = []
@@ -231,6 +276,10 @@ def update_tracking(shipment, service_provider, shipment_id, delivery_notes=None
 	if service_provider == LETMESHIP_PROVIDER:
 		letmeship = get_letmeship_utils()
 		tracking_data = letmeship.get_tracking_data(shipment_id)
+	elif service_provider == BOBGO_PROVIDER:
+		bobgo = get_bobgo_utils()
+		shipment_doc = frappe.get_doc("Shipment", shipment)
+		tracking_data = bobgo.get_tracking_data(shipment_doc.awb_number)
 	elif service_provider == SENDCLOUD_PROVIDER:
 		sendcloud = SendCloudUtils()
 		tracking_data = sendcloud.get_tracking_data(shipment_id)

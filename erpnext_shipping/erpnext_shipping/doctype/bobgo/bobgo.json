@@ -1,0 +1,67 @@
+{
+ "actions": [],
+ "allow_events_in_timeline": 1,
+ "allow_rename": 1,
+ "creation": "2026-04-15 12:26:12.657204",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "enabled",
+  "use_test_environment",
+  "bearer_token",
+  "default_timeout_ms"
+ ],
+ "fields": [
+  {
+   "default": "0",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enabled?"
+  },
+  {
+   "default": "0",
+   "fieldname": "use_test_environment",
+   "fieldtype": "Check",
+   "label": "Use Test Environment?"
+  },
+  {
+   "fieldname": "bearer_token",
+   "fieldtype": "Password",
+   "label": "Bearer Token",
+   "mandatory_depends_on": "eval:doc.enabled"
+  },
+  {
+   "default": "10000",
+   "fieldname": "default_timeout_ms",
+   "fieldtype": "Int",
+   "label": "Default Timeout ms"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-04-15 13:31:51.846840",
+ "modified_by": "Administrator",
+ "module": "ERPNext Shipping",
+ "name": "BobGo",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

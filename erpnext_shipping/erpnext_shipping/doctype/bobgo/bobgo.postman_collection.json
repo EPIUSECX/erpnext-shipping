@@ -1,0 +1,923 @@
+{
+	"info": {
+		"_postman_id": "fdd7c808-0a4e-4488-93cf-57b3171ddde6",
+		"name": "Bob Go API Docs",
+		"description": "# Welcome to the Bob Go API!\n\nWelcome to the Bob Go API, an extensive suite of web services designed to streamline your e-commerce operations by integrating advanced shipping functionalities directly into your platform. Our API facilitates real-time shipping rate calculations, order synchronization, shipment submissions, and tracking event retrievals, thereby enhancing your e-commerce solution with efficient logistics management.\n\n**Capabilities and features:**\n\n- **Rates at checkout**: Retrieve dynamic, fixed, courier, and formula rates configured within the Bob Go platform to present a variety of shipping options to your customers during checkout.\n    \n- **Order synchronization**: Keep your platform in sync with orders as they are created, updated, or removed from Bob Go, ensuring consistent data across systems.\n    \n- **Shipment submission**: Seamlessly submit new shipments to couriers through the API, with the ability to review available service levels beforehand to prevent submission errors.\n    \n- **Tracking and updates**: Access detailed tracking events for your shipments, enabling proactive customer updates and internal monitoring.\n    \n\n**Sandbox environment:**\n\nTo support your development and testing needs, we offer a fully-functional sandbox environment, which simulates all API endpoints without processing actual shipments. Here’s how you can make the most of it:\n\n- **Sandbox registration**: Sign up for a [sandbox account](https://sandbox.bobgo.co.za/) to obtain your unique API keys, available under the settings menu.\n    \n- **Credits for testing**: The sandbox account is pre-loaded with ample credit, allowing for the creation of unlimited test shipments without incurring costs.\n    \n- **Endpoint URLs**: Our documentation provides sandbox endpoint URLs, which you'll use during the integration phase.\n    \n- **Transition to production**: Once testing is complete and you’re satisfied with the integration, you can transition to the production environment by updating the endpoint URLs and obtaining a production bearer token.\n    \n\n**URLs for environment switch:**\n\n- Sandbox Base URL: `https://api.sandbox.bobgo.co.za/v2/`\n    \n- Production Base URL: `https://api.bobgo.co.za/v2/`\n    \n\n**Integration tools and best practices:**\n\nWe recommend using API testing tools such as Postman, which simplifies the process of API interaction and authentication. Our API employs Bearer Token Authentication, which is standard practice for securing API calls.\n\nWhen you’re ready to go live, simply switch the base URL and update your authentication token to reflect your production credentials. Our support team is ready to assist you in making a smooth transition from sandbox to production.\n\nBy integrating with Bob Go API, you position your e-commerce platform at the forefront of operational efficiency, leveraging our robust infrastructure to deliver an exceptional shipping experience to your users.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "17078768",
+		"_collection_link": "https://bob-bobgo.postman.co/workspace/Bob-Go-API-Docs~1690c6d3-12b2-4840-906e-b3e978dc7e60/collection/17078768-fdd7c808-0a4e-4488-93cf-57b3171ddde6?action=share&source=collection_link&creator=17078768"
+	},
+	"item": [
+		{
+			"name": "Workflows",
+			"item": [],
+			"description": "Optimize your shipping operations by utilizing the robust capabilities of the Bob Go API. Follow our streamlined workflows to seamlessly integrate your order creation and fulfillment processes:\n\n**Creating orders:**\n\nInitiate your shipping process with the Bob Go API by creating orders directly on our platform. This grants you full access to our suite of shipping tools, including:\n\n- Print packing slips for order handling efficiency.\n    \n- Retrieve RAC (rates at checkout) to present the best shipping rates to your customers.\n    \n- Book shipments effortlessly with integrated courier options.\n    \n- Download waybills for a smooth delivery process.\n    \n\nOur API's `/orders` endpoint is designed for flexibility, accepting a wide range of data inputs with minimal validation requirements. Tailor the complexity of your orders to match your data availability.\n\nStay informed of order progressions with `fulfillment/created` webhooks, alerting you the moment an order moves into the fulfillment stage.\n\nLeverage this API for channel integration outside the native support of Bob Go, ensuring a unified order management system.\n\n**Creating shipments:**\n\nAdvance to shipment booking via the API, mindful of the necessary state management for handling asynchronous processes.\n\n**Step 1: Request rates**  \nStart by obtaining shipment rates. Submit collection and delivery details alongside parcel information to fetch a list of courier services and rates. Implement a timeout feature to set the maximum wait time for rate retrieval, or use the 'rate request id' for immediate access to available rates.\n\n**Step 2: Book shipments**  \nWith rates in hand, proceed to shipment booking. Choose your preferred courier and service level and submit them through the 'shipment create' endpoint, which also includes a timeout mechanism.\n\n**Attention to** **`submission_status`**:  \nMonitor the `submission_status` from the shipment create endpoint response. This status determines if the shipment booking is successful or pending. In case of communication issues with the courier, our system will automatically retry, indicated by a `failed-will-retry` status.\n\n**Step 3: Waybill and tracking**  \nUpon successful shipment submission, access the waybill endpoint to download or print your waybill. The shipment enters a `pending-collection` state and tracking updates will commence once provided by the courier.\n\nSubscribe to webhooks to stay up to date with a shipment's tracking updates.\n\nAlways record the shipment ID and tracking reference for future tracking and inquiries. If necessary, you can cancel shipments through the API, though be aware of the courier's specific cancellation policies.\n\nBy following these steps, you ensure that your shipping workflow is as efficient and integrated as possible, taking full advantage of the Bob Go platform’s offerings."
+		},
+		{
+			"name": "Authentication",
+			"item": [],
+			"description": "With the introduction of Version 2 of the Bob Go API, we have transitioned to using Bearer Token Authentication to enhance security and streamline the process of making API calls. This standard method ensures that all interactions with the API are permitted and secure.\n\n**Bearer token authentication explained:**\n\nBearer Token Authentication requires an access token, known as a Bearer Token, to be included in the API request header. This token acts as a credential, validating that the request comes from an authenticated user or service with the appropriate permissions.\n\n**Obtaining your bearer token:**\n\nTo begin using the API, you must first obtain your unique Bearer Token, which will be issued upon the successful creation of your developer account or application registration within the Bob Go platform. This token should be securely stored, as it grants access to your account operations within the API.\n\n**Using your bearer token:**\n\nOnce you have your token, making an API call is straightforward. Include the token in the header of every HTTP request you make to the API. Here's how you do it:\n\n``` json\n\"Authorization\": \"Bearer YOUR_UNIQUE_TOKEN\"\n\n ```\n\nReplace `YOUR_UNIQUE_TOKEN` with the actual token provided to you.\n\n**Sandbox environment for safe testing:**\n\nTo facilitate a safe and isolated environment for development and testing, we've established a sandbox environment, dubbed Sandbox Couriers. This allows you to test your API integrations without affecting live data or operations. You can experiment with API calls, refine your integration processes, and ensure everything runs smoothly before deploying to a production environment.\n\n**Security best practices:**\n\nIt's crucial to follow best practices to ensure the security of your API usage:\n\n- **Keep your token private**: Your Bearer Token is akin to a password. Keep it confidential and never expose it in client-side code or public repositories.\n    \n- **Use HTTPS**: Always make API calls over HTTPS to protect the token during transit.\n- **Handle token expiration gracefully**: Tokens may have an expiration time for security reasons. Ensure your application can handle token renewal without service interruption.\n    \n\n**What to expect with bearer token authentication:**\n\n- **Simplified headers**: With Bearer Tokens, authentication information is neatly encapsulated in the header, eliminating the need for complex signature constructions.\n    \n- **Stateless management**: The server doesn't need to remember the state of your authentication, as the token itself is a self-contained entity containing all the necessary user data.\n    \n- **Enhanced security**: The use of Bearer Tokens aligns with OAuth 2.0 standards, providing a high level of security for your API interactions.\n    \n\nBy following these guidelines, you can securely and efficiently interact with the Bob Go API, ensuring that your e-commerce operations are robust and reliable.\n\nTo generate a new API key, go to your settings menu and then [API keys](https://sandbox.bobgo.co.za/settings?tab=api-keys)"
+		},
+		{
+			"name": "Important concepts",
+			"item": [],
+			"description": "Re-usable objects and concepts are utilised throughout the API.\n\n# Addresses\n\nAddress objects are always the same, even though the object key could be different. One example of this is the 'collection_address' and the 'delivery_address' objects. The fields inside the object, however, stay the same.\n\n``` json\n\"collection_address\": {\n    \"company\": \"\",\n    \"street_address\": \"36 Marelu Street\",\n    \"local_area\": \"Six Fountains Estate\",\n    \"city\": \"Pretoria\",\n    \"zone\": \"Gauteng\",\n    \"country\": \"ZA\",\n    \"code\": \"0181\"\n},\n\n ```\n\n# Parcels\n\nA collection of parcels are often passed to various of endpoints and will always be in the same format.\n\n``` json\n\"parcels\": [\n    {\n        \"description\": \"Box\",\n        \"submitted_length_cm\": 42.5,\n        \"submitted_width_cm\": 38.5,\n        \"submitted_height_cm\": 5.5,\n        \"submitted_weight_kg\": 3,\n        \"custom_parcel_reference\": \"custom reference\"\n    },\n    {\n        \"description\": \"Flyer\",\n        \"submitted_length_cm\": 42.5,\n        \"submitted_width_cm\": 38.5,\n        \"submitted_height_cm\": 5.5,\n        \"submitted_weight_kg\": 1.3\n    }\n],\n\n ```"
+		},
+		{
+			"name": "Rates at checkout (RAC) vs. Rates",
+			"item": [],
+			"description": "Understanding the distinction between Rates at checkout (RAC) and Rates is crucial for implementing the most efficient and user-friendly shipping experience on your e-commerce platform. Here’s a detailed breakdown of these two core concepts:\n\n**Rates at checkout (RAC):**  \nRAC is an API endpoint specifically designed to enhance the checkout experience on your e-commerce site. It allows for the seamless integration of customized shipping rates that are predetermined within the Bob Go platform. When a customer proceeds to checkout, the RAC system kicks in to offer tailored shipping options that align with your business rules and preferences.\n\nKey features of RAC:\n\n- It reflects the shipping rates and options as configured on the Bob Go platform.\n    \n- RAC offers personalization based on service levels, delivery zones, package weight, and order value.\n    \n- You can control the delivery experience by offering Dynamic rates (adjusted in real-time), Fixed rates (consistent regardless of variables), Courier rates (specific to courier partners like TCG or IE), and Formula rates (calculated through a predefined formula).\n    \n- It also provides the flexibility to exclude shipping services to certain areas by returning a No Rate response.\n    \n\n**Rates:**  \nIn contrast, the Rates endpoint is used for obtaining shipping rates directly from couriers without the application of your platform's business logic or customization. This endpoint is ideal for scenarios where you need a straightforward quote from the courier partners based on the package and delivery details provided at the time of the query.\n\nKey features of Rates:\n\n- Direct retrieval of courier-specific rates without any modifications or rules applied.\n    \n- Real-time rate information based on the current data provided for collection and delivery points, as well as parcel specifications.\n    \n- Rates fetched from this endpoint are raw and do not take into account any special rates or discounts you may have set up on the Bob Go platform.\n    \n\n**Difference at a glance:**\n\n- **RAC:** Customized rates tailored during the checkout process, based on your configurations on the Bob Go platform.\n    \n- **Rates:** Raw, unmodified courier rates retrieved directly for a given shipment's specifics.\n    \n\n**When to use each:**\n\n- Use **RAC** when you want to offer your customers a range of shipping options at checkout that are customized according to your e-commerce platform's shipping strategy and rules.\n    \n- Use **Rates** when you need an unaltered quote from the courier for comparison, outside of the checkout process, or when you need to quickly fetch a rate for a one-off shipment without the influence of your business’s shipping preferences.\n    \n\nIn essence, RAC is about providing a curated shipping experience during the customer's purchase process, while Rates is about getting a direct, no-frills quote from the courier. Both play vital roles in your shipping operations, and understanding when and how to use each will greatly enhance your logistics efficiency and customer satisfaction."
+		},
+		{
+			"name": "Rates at checkout",
+			"item": [
+				{
+					"name": "Get checkout rates",
+					"protocolProfileBehavior": {
+						"followRedirects": false,
+						"followOriginalHttpMethod": false,
+						"followAuthorizationHeader": false
+					},
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": ""
+							},
+							{
+								"key": "X-Amz-Date",
+								"value": "20210506T134832Z"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"collection_address\": {\n        \"company\": \"Bob Go\",\n        \"street_address\": \"125 Dallas Avenue\",\n        \"local_area\": \"Newlands\",\n        \"city\": \"Pretoria\",\n        \"zone\": \"GP\",\n        \"country\": \"ZA\",\n        \"code\": \"0181\"\n    },\n    \"delivery_address\": {\n        \"company\": \"Bob Go\",\n        \"street_address\": \"125 Dallas Avenue\",\n        \"local_area\": \"Newlands\",\n        \"city\": \"Pretoria\",\n        \"zone\": \"GP\",\n        \"country\": \"ZA\",\n        \"code\": \"0181\"\n    },\n    \"items\": [\n        {\n            \"description\": \"\",\n            \"price\": 200,\n            \"quantity\": 1,\n            \"length_cm\": 17,\n            \"width_cm\": 8,\n            \"height_cm\": 5,\n            \"weight_kg\": 0\n        }\n    ],\n    \"declared_value\": 0,\n    \"handling_time\": 2\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/rates-at-checkout",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"rates-at-checkout"
+							]
+						},
+						"description": "This endpoint is not designed to get rates for shipments, but rather to get rates that are configured within Bob Go to supply a rate that buyers will pay at checkout. See our Rates section to get rates for shipments\n\n| Field | Type | Description | Required |\n| --- | --- | --- | --- |\n| collection_address.company | string | Name of the company responsible for the collection | No |\n| collection_address.street_address | string | Street address of the collection point | Yes |\n| collection_address.local_area | string | Local area or neighborhood of the collection point | Yes |\n| collection_address.city | string | City where the collection point is located | Yes |\n| collection_address.zone | string | Zone or state code for the collection point | Yes |\n| collection_address.country | string | Two-letter ISO country code for the collection point | Yes |\n| collection_address.code | string | Postal or zip code of the collection point | Yes |\n| collection_address.lat | float | Latitude coordinate of the collection point | No |\n| collection_address.lng | float | Longitude coordinate of the collection point | No |\n| delivery_address.company | string | Name of the company responsible for the delivery | No |\n| delivery_address.street_address | string | Street address of the delivery point | Yes |\n| delivery_address.local_area | string | Local area or neighborhood of the delivery point | Yes |\n| delivery_address.city | string | City where the delivery point is located | Yes |\n| delivery_address.zone | string | Zone or state code for the delivery point | Yes |\n| delivery_address.country | string | Two-letter ISO country code for the delivery point | Yes |\n| delivery_address.code | string | Postal or zip code of the delivery point | Yes |\n| delivery_address.lat | float | Latitude coordinate of the delivery point | No |\n| delivery_address.lng | float | Longitude coordinate of the delivery point | No |\n| items | array | Array of item objects in the shipment | Yes |\n| items.description | string | Description of the item | Yes |\n| items.price | number | Price of the item | Yes |\n| items.length_cm | number | Length of the item in centimeters | Yes |\n| items.width_cm | number | Width of the item in centimeters | Yes |\n| items.height_cm | number | Height of the item in centimeters | Yes |\n| items.weight_kg | number | Weight of the item in kilograms | Yes |\n| declared_value | number | Total declared value of the shipment | Yes |\n| handling_time | number | Handling time for the shipment in business days | Yes |"
+					},
+					"response": []
+				}
+			],
+			"description": "The Rates at checkout (RAC) endpoint is a feature-rich component of the Bob Go API suite, engineered to integrate seamlessly with your e-commerce ecosystem. It's designed to facilitate the delivery of personalized shipping rates at the pivotal moment of purchase, enhancing the checkout experience for your customers.\n\nWhen utilizing the RAC endpoint, you have the capability to showcase a variety of shipping options tailored to your customers' unique needs and preferences. This is not just a static list of options; it's a dynamic selection influenced by a multitude of factors such as geographical zones, package weight, and overall order value, ensuring a custom-fit shipping solution for every transaction.\n\nFeatures of the Rates at checkout endpoint:\n\n- **Personalized shipping rates**: Offer precise shipping rates at the moment of checkout, calculated based on the comprehensive data provided by the customer and your own predefined settings.\n    \n- **Customized rate types**:\n    - **Dynamic rates**: Rates that adjust in real-time, responding to variable factors such as distance, package size, and current courier pricing.\n        \n    - **Fixed rates**: A consistent rate option that remains unchanged, providing a stable cost regardless of the varying parameters of an order.\n        \n    - **Courier rates**: Direct rates from our courier partners, reflecting the specific costs associated with each courier's service offerings.\n        \n    - **Formula rates**: Sophisticated rates derived from formulas that consider multiple inputs to calculate the final shipping cost, allowing for extensive customization and flexibility.\n        \n- **Area-specific rate management**: Exercise the option to exclude shipping services for designated areas by issuing a No Rate response, optimizing your service delivery network.\n    \n\nComprehensive Utilization:\n\n- **Customized integration**: The RAC endpoint is crafted for a frictionless integration into your e-commerce platform, enabling you to present live, customized shipping rates directly within the checkout flow.\n    \n- **Enhanced customer Experience**: By providing shipping options that align with your customers' expectations and order specifics, the RAC endpoint plays a critical role in enhancing user satisfaction and fostering loyalty.\n    \n- **Business rule application**: This endpoint respects the shipping preferences and rules you've set on the Bob Go platform, ensuring that the rates presented are in harmony with your business strategy and logistics arrangements.\n    \n\nThe RAC endpoint represents a strategic tool in your API arsenal, offering not just rate information but a tailored checkout experience that aligns with your operational goals and customer service excellence standards. With this endpoint, you are equipped to deliver a checkout process that is both customer-centric and reflective of your e-commerce platform's unique value proposition."
+		},
+		{
+			"name": "Orders",
+			"item": [
+				{
+					"name": "Create order",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"channel_order_number\": \"ABC123\",\n    \"customer_name\": \"John\",\n    \"customer_surname\": \"Doe\",\n    \"customer_email\": \"john@doe.com\",\n    \"customer_phone\": \"0123456789\",\n    \"currency\": \"ZAR\",\n    \"buyer_selected_shipping_cost\": 49.99,\n    \"buyer_selected_shipping_method\": \"Standard Shipping\",\n    \"delivery_address\": {\n        \"company\": \"\",\n        \"street_address\": \"171 Dallas Ave\",\n        \"local_area\": \"Menlyn\",\n        \"city\": \"Pretoria\",\n        \"zone\": \"Gauteng\",\n        \"country\": \"ZA\",\n        \"code\": \"0181\"\n    },\n    \"order_items\": [\n        {\n            \"description\": \"item1\",\n            \"vendor\": \"item1\",\n            \"sku\": \"sku1\",\n            \"unit_price\": 100,\n            \"qty\": 15,\n            \"unit_weight_kg\": 0.1\n        },\n        {\n            \"description\": \"item2\",\n            \"sku\": \"sku1\",\n            \"unit_price\": 200,\n            \"qty\": 10,\n            \"unit_weight_kg\": 0.1\n        }\n    ],\n    \"payment_status\": \"paid\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/orders",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"orders"
+							]
+						},
+						"description": "## Order JSON data\n\nThis documentation explains the fields in the JSON data used to create an order. The JSON data consists of various properties that define the order, customer information, delivery address, and items included in the order.\n\n### Fields\n\n#### Customer information\n\n| Field | Description | Type | Required |\n| --- | --- | --- | --- |\n| customer_name | First name of the customer | String | Yes |\n| customer_surname | Last name of the customer | String | Yes |\n| customer_email | Email address of the customer | String | Yes |\n| customer_phone | Phone number of the customer | String | Yes |\n\n#### Order information\n\n| Field | Description | Type | Required |\n| --- | --- | --- | --- |\n| currency | Currency used for the order (e.g., 'ZAR') | String | Yes |\n| buyer_selected_shipping_cost | Shipping cost selected by the buyer | Float | Yes |\n| buyer_selected_shipping_method | Shipping method selected by the buyer (e.g., 'Standard Shipping') | String | Yes |\n| payment_status | Status of the payment for the order (e.g., 'paid') | String | Yes |\n\n#### Delivery address\n\n| Field | Description | Type | Required |\n| --- | --- | --- | --- |\n| company | Name of the company (if applicable) | String | No |\n| street_address | Street address for delivery | String | Yes |\n| local_area | Local area or suburb | String | Yes |\n| city | City of the delivery address | String | Yes |\n| zone | State, province, or zone of the delivery address | String | Yes |\n| country | Two-letter country code (e.g., 'ZA') | String | Yes |\n| code | Postal or ZIP code of the delivery address | String | Yes |\n\n#### Order items\n\n| Field | Description | Type | Required |\n| --- | --- | --- | --- |\n| description | Description of the order item | String | Yes |\n| vendor | Vendor of the order item (if applicable) | String | No |\n| sku | Stock Keeping Unit (SKU) of the order item | String | Yes |\n| unit_price | Price per unit of the order item | Float | Yes |\n| qty | Quantity of the order item | Integer | Yes |\n| unit_weight_kg | Weight of the order item in kilograms (per unit) | Float | Yes |"
+					},
+					"response": []
+				},
+				{
+					"name": "Update order",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id\": 123,\n    \"payment_status\": \"paid\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/orders",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"orders"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get orders",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{host}}/orders?limit=10&offset=0",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"orders"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								}
+							]
+						},
+						"description": "Available parameters:\n\n| **Name** | **Description** |\n| --- | --- |\n| id | The ID of the order. |\n| channel_order_number | Filter on the order number. |\n| limit | Maximum number of items to return in the response. Use this to control the page size. |\n| offset | Number of items to skip before starting to collect the result set. Use this in conjunction with limit for pagination. |\n| start_date | This filters on the date that the order was placed. |\n| end_date | This filters on the date that the order was placed. |\n| order | Direction to sort: `asc` for ascending or `desc` for descending. |\n| order_by | Name of the field to sort the results by. Must be one of the allowed sortable fields. |\n| payment_status | `paid` / `unpaid` / `partially-paid` |\n| status | `new` / `completed` / `processing` / `cancelled` |\n| fulfillment_status | `fulfilled` / `unfulfilled` / `partially-fulfilled` |\n| tracking_reference | The reference of the fulfillment (shipment) created in the order. |\n| has_delivery_address | Boolean to filter for orders having a delivery address. |\n| delivery_address_zone | Filter on the province of the delivery address. |\n| archived | Boolean to filter for archived orders. If `true`, only archived order will be returned in the response. |"
+					},
+					"response": []
+				},
+				{
+					"name": "Get order fulfillments",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{host}}/order-fulfillments?order_id=970",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"order-fulfillments"
+							],
+							"query": [
+								{
+									"key": "order_id",
+									"value": "970"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create a return",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"order_id\": 5531,\n    \"instructions_collection\": \"\",\n    \"instructions_delivery\": \"\",\n    \"declared_value\": null,\n    \"parcels\": [\n        {\n            \"custom_parcel_reference\": \"\",\n            \"description\": \"Standard sleeve\",\n            \"submitted_length_cm\": 42,\n            \"submitted_width_cm\": 38,\n            \"submitted_height_cm\": 5,\n            \"submitted_weight_kg\": 0\n        }\n    ],\n    \"delivery_address\": {\n        \"street_address\": \"126 Dallas Avenue\",\n        \"local_area\": \"Waterkloof Glen\",\n        \"code\": \"0010\",\n        \"city\": \"Pretoria\",\n        \"zone\": \"GP\",\n        \"country\": \"ZA\"\n    },\n    \"collection_address\": {\n        \"company\": \"Nexus Hub\",\n        \"street_address\": \"21 Harley Street\",\n        \"local_area\": \"Ferndale\",\n        \"code\": \"2194\",\n        \"city\": \"Randburg\",\n        \"zone\": \"GP\",\n        \"country\": \"ZA\"\n    },\n    \"collection_contact_email\": \"john@doe.com\",\n    \"collection_contact_mobile_number\": \"0123456789\",\n    \"collection_contact_name\": \"John Doe\",\n    \"delivery_contact_email\": \"jane@doe.com\",\n    \"delivery_contact_mobile_number\": \"0123456789\",\n    \"delivery_contact_name\": \"Jane Doe\",\n    \"collection_min_date\": \"2025-05-23T08:00:00+02:00\",\n    \"provider_slug\": \"demo\",\n    \"service_level_code\": \"ECO\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/orders/return",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"orders",
+								"return"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "The orders endpoint is a pivotal component of the Bob Go API, offering you the power to programmatically create and manage orders across your accounts. With this endpoint, you can leverage the full suite of Bob Go's capabilities to streamline the order management process, enhancing efficiency from the point of sale through to shipment and fulfilment.\n\n**Capabilities and features:**\n\n- **Order creation and management**: Initiate new orders directly via the API, and maintain comprehensive control over order amendments, updates, and lifecycle.\n    \n- **Integrated shipping management**: Seamlessly submit shipments to our partnered courier services. Monitor the submission statuses to ensure timely dispatch and delivery.\n    \n- **Bulk operations**: Save time and resources by creating and managing shipments in bulk, allowing for efficient handling of large order volumes.\n    \n- **Documentation on demand**: Generate essential shipping documents such as waybills, packing slips, and manifests directly through the API. Choose from a variety of sizes and formats to meet your specific requirements.\n    \n- **Partial shipments**: Flexibly handle orders that require multiple shipment stages, accommodating back-ordered items or different shipment dates.\n    \n- **Packaging solutions**: Manage your packaging preferences and requirements, including dimensions, weights, and custom packaging types, ensuring each order is dispatched using the most suitable materials.\n    \n\n**Advanced features for streamlined workflows:**\n\nBob Go is designed to facilitate the entire order fulfilment process. This extends beyond mere creation and submission, encompassing every aspect of order fulfilment. Here are some additional ways in which Bob Go simplifies your workflow:\n\n- **Automated status updates**: Keep all stakeholders informed with automatic updates on order status, from payment processing to final delivery.\n    \n- **Dynamic rate calculation**: Obtain real-time shipping rates based on order specifics, enabling cost-effective and efficient delivery service selection.\n    \n- **Customization and branding**: Customize your shipping materials and documentation with branding options to enhance customer experience and reinforce brand recognition.\n    \n\nBy utilizing the Bob Go orders endpoint, you gain access to an ecosystem designed for agility and precision in e-commerce logistics. This comprehensive approach ensures that every order is processed, fulfilled, and delivered with the utmost care and efficiency, offering an unmatched level of service to your customers."
+		},
+		{
+			"name": "Packages",
+			"item": [
+				{
+					"name": "Create packages",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"packages\": [\n        {\n            \"name\": \"Standard sleeves\",\n            \"length_cm\": 42,\n            \"height_cm\": 5,\n            \"width_cm\": 38\n        },\n        {\n            \"name\": \"Box\",\n            \"length_cm\": 42,\n            \"height_cm\": 5,\n            \"width_cm\": 38\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/packages",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"packages"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update packages",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"packages\": [\n        {\n            \"id\": 2241,\n            \"name\": \"Standard sleeve updated\",\n            \"is_default\": true,\n            \"length_cm\": 40,\n            \"height_cm\": 5,\n            \"width_cm\": 38\n        },\n        {\n            \"id\": 2242,\n            \"name\": \"Box updated\",\n            \"length_cm\": 40,\n            \"height_cm\": 5,\n            \"width_cm\": 38\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/packages",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"packages"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get packages",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{host}}/packages",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"packages"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete package",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id\" : 17\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/packages",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"packages"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Rates",
+			"item": [
+				{
+					"name": "Get courier rates",
+					"protocolProfileBehavior": {
+						"followRedirects": false,
+						"followOriginalHttpMethod": false,
+						"followAuthorizationHeader": false
+					},
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"collection_address\": {\n        \"street_address\": \"125 Dallas Avenue\",\n        \"company\": \"\",\n        \"local_area\": \"Menlyn\",\n        \"city\": \"Pretoria\",\n        \"zone\": \"Gauteng\",\n        \"country\": \"ZA\",\n        \"code\": \"0181\"\n    },\n    \"delivery_address\": {\n        \"company\": \"\",\n        \"street_address\": \"22 Ealing Cres\",\n        \"local_area\": \"Bryanston\",\n        \"city\": \"Johannesburg\",\n        \"zone\": \"Gauteng\",\n        \"country\": \"ZA\",\n        \"code\": \"2191\"\n    },\n    \"parcels\": [\n        {\n            \"description\": \"Box\",\n            \"submitted_length_cm\": 40,\n            \"submitted_width_cm\": 32,\n            \"submitted_height_cm\": 6,\n            \"submitted_weight_kg\": 3,\n            \"custom_parcel_reference\": \"custom reference\"\n        },\n        {\n            \"description\": \"Flyer\",\n            \"submitted_length_cm\": 40,\n            \"submitted_width_cm\": 32,\n            \"submitted_height_cm\": 6,\n            \"submitted_weight_kg\": 1.3\n        }\n    ],\n    \"collection_contact_mobile_number\":\"+27123456789\",\n    \"collection_contact_email\":\"john@doe.com\",\n    \"collection_contact_full_name\":\"John Doe\",\n    \"delivery_contact_mobile_number\":\"+27123456789\",\n    \"delivery_contact_email\":\"jane@doe.com\",\n    \"delivery_contact_full_name\":\"Jane Doe\",\n    \"declared_value\": 1500,\n    \"timeout\": 10000\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/rates",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"rates"
+							]
+						},
+						"description": "**Get courier rates**\n\nThe example call will return rates for all configured couriers on the Bob Go platform.\n\nShould you want to return rates from specific couriers or service levels, you can do so with the following keys:\n\n``` json\n\"providers\": [  \n\"sandbox\",  \n\"demo\"  \n],  \n\"service_levels\": [  \n\"ECO\"  \n],\n\n ```"
+					},
+					"response": []
+				},
+				{
+					"name": "Get rates for an existing rate request",
+					"protocolProfileBehavior": {
+						"followRedirects": false,
+						"followOriginalHttpMethod": false,
+						"followAuthorizationHeader": false
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": ""
+							},
+							{
+								"key": "X-Amz-Date",
+								"value": "20210506T134832Z"
+							}
+						],
+						"url": {
+							"raw": "{{host}}/rates?id=340099",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"rates"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "340099"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "The Rates endpoint is an essential component of the Bob Go API, designed to provide real-time shipping rate information directly from our network of courier partners. This endpoint is integral for businesses that require immediate access to unmodified courier rates for accurate cost estimation and shipping planning.\n\nWhen interacting with the Rates endpoint, you will receive a straightforward quote from the courier based on the exact details of the shipment. This includes the collection and delivery locations, parcel dimensions, weight, and any other relevant shipping information provided in the request.\n\nFeatures of the Rates endpoint:\n\n- **Real-time data**: Fetch live shipping rates from couriers to ensure up-to-date pricing information is used in your calculations.\n    \n- **Direct courier quotes**: Access rates as they are offered by the couriers, free from any adjustments, ensuring transparency and clarity.\n    \n- **Wide courier selection**: Choose from a comprehensive list of courier partners, including TCG and IE, to find the best fit for your shipment needs.\n    \n- **Flexibility and control**: Utilize this endpoint for shipments that require immediate pricing without the influence of pre-negotiated rates or business rules.\n    \n\nThe Rates endpoint empowers you to make informed decisions by providing the raw data necessary for cost analyses and operational planning. Whether you’re comparing courier prices, estimating shipping costs for a customer's order outside the checkout process, or simply seeking the most cost-effective option for a shipment, this endpoint is your direct line to the information you need.\n\nRemember, the rates retrieved here are independent of any special deals or configurations you may have established in your Bob Go platform settings. For a customized shipping rate experience at checkout, refer to the Rates at checkout (RAC) endpoint.\n\nBy leveraging the Rates endpoint, you ensure that your business can provide accurate and immediate shipping cost information, contributing to a transparent and trust-building relationship with your customers and partners."
+		},
+		{
+			"name": "Shipments",
+			"item": [
+				{
+					"name": "Get shipments",
+					"protocolProfileBehavior": {
+						"followRedirects": false,
+						"followOriginalHttpMethod": false,
+						"followAuthorizationHeader": false
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": ""
+							},
+							{
+								"key": "X-Amz-Date",
+								"value": "20210506T134832Z"
+							}
+						],
+						"url": {
+							"raw": "{{host}}/shipments?offset=0&limit=10",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"shipments"
+							],
+							"query": [
+								{
+									"key": "offset",
+									"value": "0"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Available parameters:\n\n| **Name** | **Description** |\n| --- | --- |\n| id | The ID of the shipment. |\n| tracking_reference | The tracking reference of the shipment |\n| limit | Maximum number of items to return in the response. Use this to control the page size. |\n| offset | Number of items to skip before starting to collect the result set. Use this in conjunction with limit for pagination. |\n| start_date | This filters on the date that the shipment was created. |\n| end_date | This filters on the date that the shipment was created. |\n| order | Direction to sort: `asc` for ascending or `desc` for descending. |\n| order_by | Name of the field to sort the results by. Must be one of the allowed sortable fields. |\n| status | Filters on the status (also known as the tracking status) of the shipment. |\n| submission_status | Filters on the submission status of the shipment. |\n| provider_slug | Filters on the courier linked to the shipment. |\n| service_level_code | Filters on the service level linked to the shipment. |\n| archived | Boolean to filter for archived orders. If `true`, only archived order will be returned in the response. |"
+					},
+					"response": []
+				},
+				{
+					"name": "Create a shipment",
+					"protocolProfileBehavior": {
+						"followRedirects": false,
+						"followOriginalHttpMethod": false,
+						"followAuthorizationHeader": false
+					},
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": ""
+							},
+							{
+								"key": "X-Amz-Date",
+								"value": "20210506T134832Z"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"collection_address\": {\n        \"street_address\": \"125 Dallas Avenue\",\n        \"company\": \"\",\n        \"local_area\": \"Menlyn\",\n        \"city\": \"Pretoria\",\n        \"zone\": \"Gauteng\",\n        \"country\": \"ZA\",\n        \"code\": \"0181\"\n    },\n    \"collection_contact_name\": \"John Doe\",\n    \"collection_contact_mobile_number\": \"0123456789\",\n    \"collection_contact_email\": \"john@doe.com\",\n    \"delivery_address\": {\n        \"company\": \"\",\n        \"street_address\": \"22 Ealing Cres\",\n        \"local_area\": \"Bryanston\",\n        \"city\": \"Johannesburg\",\n        \"zone\": \"Gauteng\",\n        \"country\": \"ZA\",\n        \"code\": \"2191\"\n    },\n    \"delivery_contact_name\": \"Jane Doe\",\n    \"delivery_contact_mobile_number\": \"0123456789\",\n    \"delivery_contact_email\": \"jane@doe.com\",\n    \"parcels\": [\n        {\n            \"description\": \"Standard sleeve\",\n            \"submitted_length_cm\": 42,\n            \"submitted_width_cm\": 40,\n            \"submitted_height_cm\": 5,\n            \"submitted_weight_kg\": 2,\n            \"custom_parcel_reference\": \"custom reference\"\n        }\n    ],\n    \"declared_value\": 1500,\n    \"timeout\": 20000,\n    \"custom_tracking_reference\": \"Optional custom tracking reference\",\n    \"custom_order_number\": \"Optional custom order number\",\n    \"instructions_collection\": \"Instructions for collection\",\n    \"instructions_delivery\": \"Instructions for delivery\",\n    \"service_level_code\": \"ECO\",\n    \"provider_slug\": \"demo\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/shipments",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"shipments"
+							]
+						},
+						"description": "It's important to only supply a **provider_slug** and a **service_level_code** that was returned in a rate request. Not all couriers and service levels are available for all addresses.\n\nWe would recommend that you always first do a rate request to determine what providers ad service levels are available."
+					},
+					"response": []
+				},
+				{
+					"name": "Get shipment waybill",
+					"protocolProfileBehavior": {
+						"followRedirects": false,
+						"followOriginalHttpMethod": false,
+						"followAuthorizationHeader": false
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": ""
+							},
+							{
+								"key": "X-Amz-Date",
+								"value": "20210506T134832Z"
+							}
+						],
+						"url": {
+							"raw": "{{host}}/shipments/waybill?tracking_references=[\"UASDKRRB\"]",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"shipments",
+								"waybill"
+							],
+							"query": [
+								{
+									"key": "tracking_references",
+									"value": "[\"UASDKRRB\"]"
+								}
+							]
+						},
+						"description": "Available parameters:\n\n| **Name** | **Description** | Required |\n| --- | --- | --- |\n| tracking_references | Array of shipment references to generate a waybill for. | Yes |\n| paper_size | `A4` / `A5`/ `A6` | No |\n| waybill_size | `A5`/ `A6` | No |\n| show_email_address | Boolean field. If `false` the delivery contact email will not be displayed on the waybill. | No |"
+					},
+					"response": []
+				},
+				{
+					"name": "Get shipment sticker waybill",
+					"protocolProfileBehavior": {
+						"followRedirects": false,
+						"followOriginalHttpMethod": false,
+						"followAuthorizationHeader": false
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": ""
+							},
+							{
+								"key": "X-Amz-Date",
+								"value": "20210506T134832Z"
+							}
+						],
+						"url": {
+							"raw": "{{host}}/shipments/sticker-waybill?tracking_references=[\"UASDRW78\"]&type=pdf",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"shipments",
+								"sticker-waybill"
+							],
+							"query": [
+								{
+									"key": "tracking_references",
+									"value": "[\"UASDRW78\"]"
+								},
+								{
+									"key": "type",
+									"value": "pdf"
+								}
+							]
+						},
+						"description": "Available parameters:\n\n|  | Description | Required | **Options** |\n| --- | --- | --- | --- |\n| tracking_references | The reference of the shipment | Yes |  |\n| type | Generates either a PDF sticker waybill, or a ZPL template for a Zebra sticker waybill. | Yes | `pdf` or `zpl` |"
+					},
+					"response": []
+				},
+				{
+					"name": "Cancel shipment",
+					"protocolProfileBehavior": {
+						"followRedirects": false,
+						"followOriginalHttpMethod": false,
+						"followAuthorizationHeader": false
+					},
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": ""
+							},
+							{
+								"key": "X-Amz-Date",
+								"value": "20210506T134832Z"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"tracking_reference\": \"UASDRW78\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/shipments/cancel",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"shipments",
+								"cancel"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get POD",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{host}}/shipments/pod?tracking_reference=UASDRW78",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"shipments",
+								"pod"
+							],
+							"query": [
+								{
+									"key": "tracking_reference",
+									"value": "UASDRW78"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "The shipment creation endpoint is a vital component of the Bob Go API, designed to streamline the submission of new shipments to couriers and facilitate the retrieval of shipment details for orders previously created on your account.\n\n**Before shipment creation:**\n\nIt is crucial to initiate a rate request prior to creating a shipment. This step is essential as it informs you of the available service levels and corresponding rates from our network of couriers, based on the specific parameters of your shipment. These parameters typically include:\n\n- **Delivery address**: Determines the geographical price zoning and availability of courier services.\n    \n- **Parcel dimensions and weight**: Influences the rate due to size and weight considerations.\n    \n\nExecuting a rate request ensures that you select a service level that is both available and suitable for the delivery address and parcel characteristics of your shipment. Attempting to create a shipment with an unavailable service level will result in a failed transaction.\n\n**Shipment creation process:**\n\nWhen you're ready to create a shipment, you'll provide details such as recipient information, parcel specifications, and preferred service level to the shipment creation endpoint. Upon submission, the following occurs:\n\n- **Validation**: The details of your request are validated against the available courier options and the service levels you have determined during the rate request.\n    \n- **Submission status**: Once validated, your shipment enters our processing queue, and the `submission_status` field begins to reflect its progress. You will observe the `submission_status` cycle through various states, which include:\n    \n    - `pending-rates`: The shipment is queued and awaiting rates.\n        \n    - `pending-submission`: The shipment is awaiting submission to the courier.\n        \n    - `success`: The shipment has been successfully created and accepted by the courier.\n        \n    - `no-rates`: The shipment sumbission failed as there were no available rates for the requested service level.\n        \n    - `failed-will-retry`: The shipment submission failed, but we will retry the submission.\n        \n    - `failed-indefinitely`: The shipment creation has failed due to an issue, which will be specified so corrective action can be taken. The failed reason will be specified in `failed_reason`.\n        \n\n**Shipment tracking status:**\n\nMonitoring the `status` is critical. It is advisable to implement logic within your integration that can handle the asynchronous nature of this field:\n\n- **Webhooks**: Utilize webhooks to receive real-time status changes, allowing your system to react accordingly without the need for constant polling.\n    \n- Possible tracking statuses:\n    \n    - `pending-collection`\n        \n    - `collected`\n        \n    - `out-for-delivery`\n        \n    - `in-transit`\n        \n    - `delivered`\n        \n    - `cancelled`\n        \n    - `collection-exception`\n        \n    - `delivery-exception`\n        \n    - `failed-collection`\n        \n    - `failed-delivery`\n        \n    - `finalised`\n        \n    - `ready-for-pickup`\n        \n\n**Handling failures:**\n\nIn cases where the `submission_status` indicates a failure, it is important to understand the reason behind the failure. Common causes may include:\n\n- **Service level unavailability**: The selected service level is not available for the given parameters.\n    \n- **Invalid details**: There are inaccuracies or missing information in the shipment details.\n    \n- **Courier issues**: There may be technical issues or other problems on the courier’s end.\n    \n\nOur system is designed to attempt retries for certain failures, but you should also implement your own logic to handle re-submission where appropriate.\n\n**Post-creation actions:**\n\nOnce a shipment is successfully created, additional actions can be taken, such as:\n\n- **Waybill retrieval**: Access and print the waybill for the shipment.\n    \n- **Cancellation**: Cancel a shipment if required, aligning with the courier’s cancellation policies.\n    \n\nThis enhanced process ensures that shipments are handled efficiently and aligns with the logistics workflows of modern e-commerce operations. Through diligent management of the shipment creation endpoint, you can ensure a smooth delivery process for your customers and maintain operational excellence.\n\nRefer to the webhook section for subscribing to a submission status change should it be required. Tracking event webhooks are also available to assist with notifications of parcel movement on a shipment."
+		},
+		{
+			"name": "Tracking events",
+			"item": [
+				{
+					"name": "Getting tracking events",
+					"protocolProfileBehavior": {
+						"followRedirects": false,
+						"followOriginalHttpMethod": false,
+						"followAuthorizationHeader": false,
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": ""
+							},
+							{
+								"key": "X-Amz-Date",
+								"value": "20210506T134832Z"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"provider_id\": 1,\n    \"shipment_id\": 750,\n    \"short_tracking_reference\": \"KNH\",\n    \"custom_tracking_reference\": \"CSP12345678\",\n    \"status\": \"collected\",\n    \"shipment_time_created\": \"2021-06-08T11:07:06.012521Z\",\n    \"shipment_time_modified\": \"2021-06-10T20:30:09.234988Z\",\n    \"tracking_events\": [\n        {\n            \"id\": 0,\n            \"parcel_id\": 0,\n            \"date\": \"2021-06-10T20:30:09.112799Z\",\n            \"status\": \"collected\",\n            \"source\": \"\",\n            \"location\": \"\",\n            \"latitude\": 0,\n            \"longitude\": 0,\n            \"message\": \"\"\n        },\n        {\n            \"id\": 0,\n            \"parcel_id\": 1005,\n            \"date\": \"2021-06-10T20:30:09.09701Z\",\n            \"status\": \"collected\",\n            \"source\": \"\",\n            \"location\": \"\",\n            \"latitude\": 0,\n            \"longitude\": 0,\n            \"message\": \"\"\n        },\n        {\n            \"id\": 0,\n            \"parcel_id\": 1005,\n            \"date\": \"2021-06-08T11:07:09.182624Z\",\n            \"status\": \"collection-assigned\",\n            \"source\": \"\",\n            \"location\": \"\",\n            \"latitude\": 0,\n            \"longitude\": 0,\n            \"message\": \"\"\n        },\n        {\n            \"id\": 0,\n            \"parcel_id\": 0,\n            \"date\": \"2021-06-08T11:07:09.075784Z\",\n            \"status\": \"collection-assigned\",\n            \"source\": \"\",\n            \"location\": \"\",\n            \"latitude\": 0,\n            \"longitude\": 0,\n            \"message\": \"\"\n        },\n        {\n            \"id\": 0,\n            \"parcel_id\": 0,\n            \"date\": \"2021-06-08T11:07:08.962078Z\",\n            \"status\": \"submitted\",\n            \"source\": \"\",\n            \"location\": \"\",\n            \"latitude\": 0,\n            \"longitude\": 0,\n            \"message\": \"\"\n        },\n        {\n            \"id\": 0,\n            \"parcel_id\": 1005,\n            \"date\": \"2021-06-08T11:07:08.947884Z\",\n            \"status\": \"submitted\",\n            \"source\": \"\",\n            \"location\": \"\",\n            \"latitude\": 0,\n            \"longitude\": 0,\n            \"message\": \"\"\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/tracking?tracking_reference=UASDRW78",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"tracking"
+							],
+							"query": [
+								{
+									"key": "tracking_reference",
+									"value": "UASDRW78"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Webhooks",
+			"item": [
+				{
+					"name": "Tracking updated",
+					"item": [],
+					"description": "**Topic:** **`tracking/updated`**\n\nWhenever a tracking event is received for a shipment, a tracking update webhook will be triggered. The payload will contain a full history of all tracking events linked to the shipment.\n\n**EXAMPLE PAYLOAD:**\n\n``` json\n{\n  \"id\": \"UAEG4Z55\",\n  \"shipment_tracking_reference\": \"UAEG4Z55\",\n  \"status\": \"delivered\",\n  \"status_friendly\": \"Delivered\",\n  \"courier_slug\": \"ie\",\n  \"courier_name\": \"Internet Express\",\n  \"courier_phone\": \"011 973 3566\",\n  \"courier_logo\": \"https://ik.imagekit.io/z1viz85yxs/prod-v3/provider-logos/ie_logo.png\",\n  \"service_level\": \"ECO - Economy\",\n  \"merchant_logo\": \"https://ik.imagekit.io/z1viz85yxs/prod-v3/account-logos/34809/56ce1795-3411-48cb-a51c-d1375c1892f5-Capture.JPG\",\n  \"merchant_name\": \"Bogus Company\",\n  \"show_branding\": true,\n  \"type\": \"shipment\",\n  \"custom_order_name\": \"1908\",\n  \"order_number\": \"1908\",\n  \"channel_order_number\": \"1908\",\n  \"last_checkpoint_time\": \"2023-06-05 12:15:41+00:00\",\n  \"shipment_time_created\": \"2023-06-02 09:36:05+00:00\",\n  \"checkpoints\": [\n    {\n      \"status\": \"delivered\",\n      \"status_friendly\": \"Delivered\",\n      \"country\": \"\",\n      \"zone\": \"\",\n      \"city\": \"\",\n      \"zip\": \"\",\n      \"location\": \"\",\n      \"message\": \"PIN entered successfully\",\n      \"time\": \"2023-06-05 12:15:41+00:00\"\n    },\n    {\n      \"status\": \"out-for-delivery\",\n      \"status_friendly\": \"Out for delivery\",\n      \"country\": \"\",\n      \"zone\": \"\",\n      \"city\": \"\",\n      \"zip\": \"\",\n      \"location\": \"\",\n      \"message\": \"\\\"On my way\\\" SMS sent by the driver - 5 mins\",\n      \"time\": \"2023-06-05 12:11:56+00:00\"\n    },\n    {\n      \"status\": \"out-for-delivery\",\n      \"status_friendly\": \"Out for delivery\",\n      \"country\": \"\",\n      \"zone\": \"\",\n      \"city\": \"\",\n      \"zip\": \"\",\n      \"location\": \"\",\n      \"message\": \"\\\"On my way\\\" SMS sent by the driver - 5 mins\",\n      \"time\": \"2023-06-05 12:11:48+00:00\"\n    },\n    {\n      \"status\": \"out-for-delivery\",\n      \"status_friendly\": \"Out for delivery\",\n      \"country\": \"\",\n      \"zone\": \"\",\n      \"city\": \"\",\n      \"zip\": \"\",\n      \"location\": \"JHB\",\n      \"message\": \"\",\n      \"time\": \"2023-06-05 04:19:18+00:00\"\n    },\n    {\n      \"status\": \"at-destination-hub\",\n      \"status_friendly\": \"At destination hub\",\n      \"country\": \"\",\n      \"zone\": \"\",\n      \"city\": \"\",\n      \"zip\": \"\",\n      \"location\": \"JHB\",\n      \"message\": \"\",\n      \"time\": \"2023-06-04 09:53:10+00:00\"\n    },\n    {\n      \"status\": \"in-transit\",\n      \"status_friendly\": \"In transit\",\n      \"country\": \"\",\n      \"zone\": \"\",\n      \"city\": \"\",\n      \"zip\": \"\",\n      \"location\": \"CPT\",\n      \"message\": \"Outbound to JHB\",\n      \"time\": \"2023-06-02 13:05:45+00:00\"\n    },\n    {\n      \"status\": \"at-hub\",\n      \"status_friendly\": \"At hub\",\n      \"country\": \"\",\n      \"zone\": \"\",\n      \"city\": \"\",\n      \"zip\": \"\",\n      \"location\": \"CPT\",\n      \"message\": \"At CPT hub\",\n      \"time\": \"2023-06-02 13:05:14+00:00\"\n    },\n    {\n      \"status\": \"collected\",\n      \"status_friendly\": \"Collected\",\n      \"country\": \"\",\n      \"zone\": \"\",\n      \"city\": \"\",\n      \"zip\": \"\",\n      \"location\": \"\",\n      \"message\": \"\",\n      \"time\": \"2023-06-02 12:37:35+00:00\"\n    }\n  ],\n  \"shipment_movement_events\": {\n    \"collected_time\": \"2023-06-02 12:37:35+00:00\",\n    \"in_transit_time\": \"2023-06-04 09:53:10+00:00\",\n    \"out_for_delivery_time\": \"2023-06-05 12:11:56+00:00\",\n    \"delivered_time\": \"2023-06-05 12:15:41+00:00\"\n  },\n  \"shipment\": {\n    \"collection_contact_name\": \"John Doe\",\n    \"collection_contact_email\": \"john@doe.com\",\n    \"collection_contact_mobile_number\": \"+27123456789\",\n    \"delivery_contact_name\": \"Jane Doe\",\n    \"delivery_contact_email\": \"jane@doe.com\",\n    \"delivery_contact_mobile_number\": \"+27123456789\"\n  }\n}\n\n ```"
+				},
+				{
+					"name": "Fulfillment created",
+					"item": [],
+					"description": "**Topic:** **`fulfillment/created`**\n\nEach order on Bob Go can have multiple fulfilments linked to it. The are various types of fulfillments, such buyer collections or shipments. Each time a new fulfilment is created on an order, the webhook will be sent.\n\n**EXAMPLE PAYLOAD:**\n\n``` json\n{\n  \"id\": 6432,\n  \"account_id\": 2,\n  \"channel_ref_id\": \"\",\n  \"order_id\": 22837,\n  \"channel_order_number\": \"22837\",\n  \"method\": \"shipment\",\n  \"method_id\": 14273,\n  \"method_reference\": \"UADPWTTF\",\n  \"method_status\": \"pending-collection\",\n  \"status\": \"success\",\n  \"failed_reason\": \"\",\n  \"time_created\": \"2022-10-20T19:42:00.642739Z\",\n  \"time_modified\": \"2022-10-20T19:42:02.397912Z\",\n  \"order_items\": [\n    {\n      \"id\": 31119,\n      \"description\": \"Product 1\",\n      \"fulfilled_qty\": 1,\n      \"qty\": 1,\n      \"sku\": \"\",\n      \"total_price\": 599,\n      \"total_weight_kg\": 0.1,\n      \"unit_price\": 599,\n      \"unit_weight_kg\": 0.1,\n      \"vendor\": \"GoPugMe\",\n      \"channel_ref_id\": 12116233191527\n    }\n  ]\n}\n\n ```"
+				},
+				{
+					"name": "Shipment submission status updated",
+					"item": [],
+					"description": "**Topic:** **`shipment_submission_status/updated`**\n\nWhen a shipment is submitted, it will cycle through a collection of statuses until it is successfully submitted to the courier company. Alternatively, it will get a failure status should it have failed to submit to the courier. This webhook is sent whenever this submission status changes.\n\nRefer to the 'Shipments' section for a list of submission statuses.\n\nShipment submission to a courier can happen at a variable time. The use case for this webhook is when a notification is sent when the shipment has failed or was successfully submitted to a courier.\n\n**EXAMPLE PAYLOAD:**\n\n``` json\n{\n  \"id\": 644,\n  \"account_id\": 68,\n  \"charged_amount\": 117.3,\n  \"charged_weight_kg\": 1,\n  \"collected_date\": null,\n  \"collection_address\": {\n    \"id\": 410,\n    \"entered_address\": \"bidorbuy.co.za, 22 Ealing Crescent, Bryanston, Johannesburg, 2191, GP, South Africa\",\n    \"type\": \"unknown\",\n    \"company\": \"bidorbuy.co.za\",\n    \"street_address\": \"22 Ealing Crescent\",\n    \"local_area\": \"Bryanston\",\n    \"code\": \"2191\",\n    \"city\": \"Johannesburg\",\n    \"zone\": \"GP\",\n    \"country\": \"South Africa\",\n    \"lat\": -26.044926,\n    \"lng\": 28.024245\n  },\n  \"collection_after\": \"09:00:00\",\n  \"collection_before\": \"15:00:00\",\n  \"collection_contact_email\": \"john@doe.com\",\n  \"collection_contact_mobile_number\": \"+27123456789\",\n  \"collection_contact_name\": \"John Doe\",\n  \"collection_min_date\": \"2022-10-13T11:22:17.521043Z\",\n  \"custom_tracking_reference\": \"631\",\n  \"declared_value\": 0,\n  \"delivered_date\": null,\n  \"delivery_address_id\": 509,\n  \"delivery_address\": {\n    \"id\": 509,\n    \"entered_address\": \"bidorbuy, 22 22 Ealing Cressent, Bryanston, Johannesburg, 2191, GP, South Africa\",\n    \"type\": \"unknown\",\n    \"company\": \"bidorbuy\",\n    \"street_address\": \"22 22 Ealing Cressent\",\n    \"local_area\": \"Bryanston\",\n    \"code\": \"2191\",\n    \"city\": \"Johannesburg\",\n    \"zone\": \"GP\",\n    \"country\": \"South Africa\",\n    \"lat\": -26.044926,\n    \"lng\": 28.024245\n  },\n  \"delivery_contact_email\": \"jane@doe.com\",\n  \"delivery_contact_mobile_number\": \"+27123456789\",\n  \"delivery_contact_name\": \"Jane Doe\",\n  \"failed_reason\": null,\n  \"instructions_collection\": \"\",\n  \"instructions_delivery\": \"\",\n  \"manifest_id\": 0,\n  \"order_fulfillment\": null,\n  \"parcels\": [\n    {\n      \"actual_height_cm\": null,\n      \"actual_length_cm\": null,\n      \"actual_weight_kg\": null,\n      \"actual_width_cm\": null,\n      \"custom_parcel_reference\": null,\n      \"description\": \"Watch box\",\n      \"submitted_height_cm\": 1,\n      \"submitted_length_cm\": 1,\n      \"submitted_weight_kg\": 1,\n      \"submitted_width_cm\": 1,\n      \"tracking_reference\": \"UASDX44J/1\"\n    }\n  ],\n  \"parcel_count\": 1,\n  \"provider_shipment_id\": \"123456789\",\n  \"provider_slug\": \"demo\",\n  \"rate\": 117.3,\n  \"service_level_code\": \"ECO\",\n  \"service_level_cut_off_time\": \"16:30:00\",\n  \"meta\": {\n    \"collection_reference\": \"UASDX44J\",\n    \"estimated_collection_date\": \"2022-10-13T10:52:18.190469Z\",\n    \"estimated_delivery_date\": \"2022-10-18T06:00:00Z\"\n  },\n  \"status\": \"pending-collection\",\n  \"submission_status\": \"success\",\n  \"submitted_weight_kg\": 1,\n  \"surcharge\": null,\n  \"tags\": null,\n  \"tracking_expiry_date\": null,\n  \"tracking_last_event_time\": null,\n  \"tracking_reference\": \"UASDX44J\",\n  \"time_created\": \"2022-10-13T10:52:17.533949Z\",\n  \"time_modified\": \"2022-10-13T10:52:18.72622Z\",\n  \"channel_order_number\": \"12345\"\n}\n\n ```"
+				},
+				{
+					"name": "Shipment charged amount changed",
+					"item": [],
+					"description": "**Topic:** **`shipment_charged_amount/updated`**\n\nThis webhook will be sent whenever updated charges or weights on a shipment are received.\n\n``` json\n{\n  \"id\": 644,\n  \"account_id\": 68,\n  \"charged_amount\": 117.3,\n  \"charged_weight_kg\": 1,\n  \"collected_date\": null,\n  \"collection_address\": {\n    \"id\": 410,\n    \"entered_address\": \"bidorbuy.co.za, 22 Ealing Crescent, Bryanston, Johannesburg, 2191, GP, South Africa\",\n    \"type\": \"unknown\",\n    \"company\": \"bidorbuy.co.za\",\n    \"street_address\": \"22 Ealing Crescent\",\n    \"local_area\": \"Bryanston\",\n    \"code\": \"2191\",\n    \"city\": \"Johannesburg\",\n    \"zone\": \"GP\",\n    \"country\": \"South Africa\",\n    \"lat\": -26.044926,\n    \"lng\": 28.024245\n  },\n  \"collection_after\": \"09:00:00\",\n  \"collection_before\": \"15:00:00\",\n  \"collection_contact_email\": \"john@doe.com\",\n  \"collection_contact_mobile_number\": \"+27123456789\",\n  \"collection_contact_name\": \"John Doe\",\n  \"collection_min_date\": \"2022-10-13T11:22:17.521043Z\",\n  \"custom_tracking_reference\": \"631\",\n  \"channel_order_number\": \"123456\",\n  \"declared_value\": 0,\n  \"delivered_date\": null,\n  \"delivery_address_id\": 509,\n  \"delivery_address\": {\n    \"id\": 509,\n    \"entered_address\": \"bidorbuy, 22 22 Ealing Cressent, Bryanston, Johannesburg, 2191, GP, South Africa\",\n    \"type\": \"unknown\",\n    \"company\": \"bidorbuy\",\n    \"street_address\": \"22 22 Ealing Cressent\",\n    \"local_area\": \"Bryanston\",\n    \"code\": \"2191\",\n    \"city\": \"Johannesburg\",\n    \"zone\": \"GP\",\n    \"country\": \"South Africa\",\n    \"lat\": -26.044926,\n    \"lng\": 28.024245\n  },\n  \"delivery_contact_email\": \"jane@doe.com\",\n  \"delivery_contact_mobile_number\": \"+27123456789\",\n  \"delivery_contact_name\": \"Jane Doe\",\n  \"failed_reason\": null,\n  \"instructions_collection\": \"\",\n  \"instructions_delivery\": \"\",\n  \"manifest_id\": 0,\n  \"order_fulfillment\": null,\n  \"parcels\": [\n    {\n      \"actual_height_cm\": null,\n      \"actual_length_cm\": null,\n      \"actual_weight_kg\": null,\n      \"actual_width_cm\": null,\n      \"custom_parcel_reference\": null,\n      \"description\": \"Watch box\",\n      \"submitted_height_cm\": 1,\n      \"submitted_length_cm\": 1,\n      \"submitted_weight_kg\": 1,\n      \"submitted_width_cm\": 1,\n      \"tracking_reference\": \"UASDX44J/1\"\n    }\n  ],\n  \"parcel_count\": 1,\n  \"provider_shipment_id\": \"123456789\",\n  \"provider_slug\": \"demo\",\n  \"rate\": 117.3,\n  \"service_level_code\": \"ECO\",\n  \"service_level_cut_off_time\": \"16:30:00\",\n  \"meta\": {\n    \"collection_reference\": \"UASDX44J\",\n    \"estimated_collection_date\": \"2022-10-13T10:52:18.190469Z\",\n    \"estimated_delivery_date\": \"2022-10-18T06:00:00Z\"\n  },\n  \"status\": \"pending-collection\",\n  \"submission_status\": \"success\",\n  \"submitted_weight_kg\": 1,\n  \"surcharge\": null,\n  \"tags\": null,\n  \"tracking_expiry_date\": null,\n  \"tracking_last_event_time\": null,\n  \"tracking_reference\": \"UASDX44J\",\n  \"time_created\": \"2022-10-13T10:52:17.533949Z\",\n  \"time_modified\": \"2022-10-13T10:52:18.72622Z\"\n}\n\n ```"
+				},
+				{
+					"name": "Shipment charged weight changed",
+					"item": [],
+					"description": "**Topic:** **`shipment_charged_weight/updated`**\n\nThis webhook will be sent whenever updated charges or weights on a shipment are received.\n\n``` json\n{\n  \"id\": 644,\n  \"account_id\": 68,\n  \"charged_amount\": 117.3,\n  \"charged_weight_kg\": 1,\n  \"collected_date\": null,\n  \"collection_address\": {\n    \"id\": 410,\n    \"entered_address\": \"bidorbuy.co.za, 22 Ealing Crescent, Bryanston, Johannesburg, 2191, GP, South Africa\",\n    \"type\": \"unknown\",\n    \"company\": \"bidorbuy.co.za\",\n    \"street_address\": \"22 Ealing Crescent\",\n    \"local_area\": \"Bryanston\",\n    \"code\": \"2191\",\n    \"city\": \"Johannesburg\",\n    \"zone\": \"GP\",\n    \"country\": \"South Africa\",\n    \"lat\": -26.044926,\n    \"lng\": 28.024245\n  },\n  \"collection_after\": \"09:00:00\",\n  \"collection_before\": \"15:00:00\",\n  \"collection_contact_email\": \"john@doe.com\",\n  \"collection_contact_mobile_number\": \"+27123456789\",\n  \"collection_contact_name\": \"John Doe\",\n  \"collection_min_date\": \"2022-10-13T11:22:17.521043Z\",\n  \"custom_tracking_reference\": \"631\",\n  \"declared_value\": 0,\n  \"delivered_date\": null,\n  \"delivery_address_id\": 509,\n  \"delivery_address\": {\n    \"id\": 509,\n    \"entered_address\": \"bidorbuy, 22 22 Ealing Cressent, Bryanston, Johannesburg, 2191, GP, South Africa\",\n    \"type\": \"unknown\",\n    \"company\": \"bidorbuy\",\n    \"street_address\": \"22 22 Ealing Cressent\",\n    \"local_area\": \"Bryanston\",\n    \"code\": \"2191\",\n    \"city\": \"Johannesburg\",\n    \"zone\": \"GP\",\n    \"country\": \"South Africa\",\n    \"lat\": -26.044926,\n    \"lng\": 28.024245\n  },\n  \"delivery_contact_email\": \"jane@doe.com\",\n  \"delivery_contact_mobile_number\": \"+27123456789\",\n  \"delivery_contact_name\": \"Jane Doe\",\n  \"failed_reason\": null,\n  \"instructions_collection\": \"\",\n  \"instructions_delivery\": \"\",\n  \"manifest_id\": 0,\n  \"order_fulfillment\": null,\n  \"parcels\": [\n    {\n      \"actual_height_cm\": null,\n      \"actual_length_cm\": null,\n      \"actual_weight_kg\": null,\n      \"actual_width_cm\": null,\n      \"custom_parcel_reference\": null,\n      \"description\": \"Watch box\",\n      \"submitted_height_cm\": 1,\n      \"submitted_length_cm\": 1,\n      \"submitted_weight_kg\": 1,\n      \"submitted_width_cm\": 1,\n      \"tracking_reference\": \"UASDX44J/1\"\n    }\n  ],\n  \"parcel_count\": 1,\n  \"provider_shipment_id\": \"123456789\",\n  \"provider_slug\": \"demo\",\n  \"rate\": 117.3,\n  \"service_level_code\": \"ECO\",\n  \"service_level_cut_off_time\": \"16:30:00\",\n  \"meta\": {\n    \"collection_reference\": \"UASDX44J\",\n    \"estimated_collection_date\": \"2022-10-13T10:52:18.190469Z\",\n    \"estimated_delivery_date\": \"2022-10-18T06:00:00Z\"\n  },\n  \"status\": \"pending-collection\",\n  \"submission_status\": \"success\",\n  \"submitted_weight_kg\": 1,\n  \"surcharge\": null,\n  \"tags\": null,\n  \"tracking_expiry_date\": null,\n  \"tracking_last_event_time\": null,\n  \"tracking_reference\": \"UASDX44J\",\n  \"time_created\": \"2022-10-13T10:52:17.533949Z\",\n  \"time_modified\": \"2022-10-13T10:52:18.72622Z\",\n  \"channel_order_number\": \"123345\"\n}\n\n ```"
+				},
+				{
+					"name": "Shipment health status updated",
+					"item": [],
+					"description": "**Topic:** **`shipment_health_status/updated`**\n\nThis webhook is triggered whenever the **health status** of a shipment changes. The shipment health status reflects whether the shipment is progressing as expected, based on its collection and delivery timelines.\n\nThe use case for this webhook is to monitor shipment progress and proactively manage shipments that are delayed, at risk, or have encountered collection or delivery issues.\n\n**EXAMPLE PAYLOAD:**\n\n``` json\n{\n  \"id\": 644,\n  \"account_id\": 68,\n  \"charged_amount\": 117.3,\n  \"charged_weight_kg\": 1,\n  \"collected_date\": null,\n  \"collection_address\": {\n    \"id\": 410,\n    \"entered_address\": \"bidorbuy.co.za, 22 Ealing Crescent, Bryanston, Johannesburg, 2191, GP, South Africa\",\n    \"type\": \"unknown\",\n    \"company\": \"bidorbuy.co.za\",\n    \"street_address\": \"22 Ealing Crescent\",\n    \"local_area\": \"Bryanston\",\n    \"code\": \"2191\",\n    \"city\": \"Johannesburg\",\n    \"zone\": \"GP\",\n    \"country\": \"South Africa\",\n    \"lat\": -26.044926,\n    \"lng\": 28.024245\n  },\n  \"collection_after\": \"09:00:00\",\n  \"collection_before\": \"15:00:00\",\n  \"collection_contact_email\": \"john@doe.com\",\n  \"collection_contact_mobile_number\": \"+27123456789\",\n  \"collection_contact_name\": \"John Doe\",\n  \"collection_min_date\": \"2022-10-13T11:22:17.521043Z\",\n  \"custom_tracking_reference\": \"631\",\n  \"declared_value\": 0,\n  \"delivered_date\": null,\n  \"delivery_address_id\": 509,\n  \"delivery_address\": {\n    \"id\": 509,\n    \"entered_address\": \"bidorbuy, 22 22 Ealing Cressent, Bryanston, Johannesburg, 2191, GP, South Africa\",\n    \"type\": \"unknown\",\n    \"company\": \"bidorbuy\",\n    \"street_address\": \"22 22 Ealing Cressent\",\n    \"local_area\": \"Bryanston\",\n    \"code\": \"2191\",\n    \"city\": \"Johannesburg\",\n    \"zone\": \"GP\",\n    \"country\": \"South Africa\",\n    \"lat\": -26.044926,\n    \"lng\": 28.024245\n  },\n  \"delivery_contact_email\": \"jane@doe.com\",\n  \"delivery_contact_mobile_number\": \"+27123456789\",\n  \"delivery_contact_name\": \"Jane Doe\",\n  \"failed_reason\": null,\n  \"instructions_collection\": \"\",\n  \"instructions_delivery\": \"\",\n  \"manifest_id\": 0,\n  \"order_fulfillment\": null,\n  \"parcels\": [\n    {\n      \"actual_height_cm\": null,\n      \"actual_length_cm\": null,\n      \"actual_weight_kg\": null,\n      \"actual_width_cm\": null,\n      \"custom_parcel_reference\": null,\n      \"description\": \"Watch box\",\n      \"submitted_height_cm\": 1,\n      \"submitted_length_cm\": 1,\n      \"submitted_weight_kg\": 1,\n      \"submitted_width_cm\": 1,\n      \"tracking_reference\": \"UASDX44J/1\"\n    }\n  ],\n  \"parcel_count\": 1,\n  \"provider_shipment_id\": \"123456789\",\n  \"provider_slug\": \"demo\",\n  \"rate\": 117.3,\n  \"service_level_code\": \"ECO\",\n  \"service_level_cut_off_time\": \"16:30:00\",\n  \"meta\": {\n    \"collection_reference\": \"UASDX44J\",\n    \"estimated_collection_date\": \"2022-10-13T10:52:18.190469Z\",\n    \"estimated_delivery_date\": \"2022-10-18T06:00:00Z\"\n  },\n  \"status\": \"pending-collection\",\n  \"submission_status\": \"success\",\n  \"health_status\":\"healthy\",\n  \"health_status_reason\": \"\",\n  \"submitted_weight_kg\": 1,\n  \"surcharge\": null,\n  \"tags\": null,\n  \"tracking_expiry_date\": null,\n  \"tracking_last_event_time\": null,\n  \"tracking_reference\": \"UASDX44J\",\n  \"time_created\": \"2022-10-13T10:52:17.533949Z\",\n  \"time_modified\": \"2022-10-13T10:52:18.72622Z\",\n  \"channel_order_number\": \"12345\"\n}\n\n ```"
+				},
+				{
+					"name": "Subscribe to a webhook",
+					"protocolProfileBehavior": {
+						"followRedirects": false,
+						"followOriginalHttpMethod": false,
+						"followAuthorizationHeader": false
+					},
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": ""
+							},
+							{
+								"key": "X-Amz-Date",
+								"value": "20210506T134832Z"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"webhook_subscriptions\": [\n        {\n            \"delivery_url\": \"https://somewebhookurl.com\",\n            \"topic\": \"fulfillment/created\",\n            \"status\": \"active\"\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/webhooks",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"webhooks"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete webhook",
+					"protocolProfileBehavior": {
+						"followRedirects": false,
+						"followOriginalHttpMethod": false,
+						"followAuthorizationHeader": false
+					},
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": ""
+							},
+							{
+								"key": "X-Amz-Date",
+								"value": "20210506T134832Z"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"ids\": [\n        364\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/webhooks",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"webhooks"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get webhooks",
+					"protocolProfileBehavior": {
+						"followRedirects": false,
+						"followOriginalHttpMethod": false,
+						"followAuthorizationHeader": false
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": ""
+							},
+							{
+								"key": "X-Amz-Date",
+								"value": "20210506T134832Z"
+							}
+						],
+						"url": {
+							"raw": "{{host}}/webhooks",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"webhooks"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "**Understanding webhooks in Bob Go API:**\n\nWebhooks in the Bob Go API are crucial for creating real-time, automated notifications that inform your system of different events as they happen, without the need for continuous polling. Below is a table outlining the various webhook topics your system can subscribe to:\n\n|  | Description |\n| --- | --- |\n| `tracking/updated` | Notifies your system when a shipment's tracking information updates. |\n| `fulfillment/created` | Alerts you when an order has been processed and fulfillment is created. |\n| `shipment_submission_status/updated` | Informs you when there's a change in a shipment's submission status with a courier. |\n| `shipment_charged_amount/updated` | Indicates any changes to the charged amount for a shipment. |\n| `shipment_charged_weight/updated` | Notifies you of adjustments in the charged weight of a shipment. |\n\n**How webhooks work:**\n\n- When an event in the table occurs, the Bob Go system triggers a webhook that sends a POST request with the event details to the URL you have set up to handle such notifications.\n    \n- The request contains a payload, which is a structured data format detailing the specific event that took place.\n    \n\n**Receiving webhook notifications:**\n\n- Your system should be configured to receive POST requests at the webhook URL.\n    \n- Upon receiving a webhook, your system must return a 200 HTTP status code to confirm successful receipt.\n    \n- Failing to return a 200 status code, especially if it occurs repeatedly, can lead to the deactivation of the webhook to prevent errors.\n    \n\n**Best practices:**\n\n- **Secure your endpoint**: Make sure that your webhook endpoint is secure and can authenticate that the incoming webhook is from a verified source, like Bob Go.\n    \n- **Efficient processing**: Handle the payload quickly and avoid long-running processes within your webhook receiver.\n    \n- **Resilience**: Design your system to queue and retry processing the webhook if the first attempt fails.\n    \n- **Monitor your webhooks**: Keep an audit log of received webhooks and the status of your responses for debugging and historical analysis.\n    \n\nIncorporating webhooks into your system allows you to stay updated with the lifecycle of your shipments and related events in real-time, ensuring your operations are efficient and responsive to changes as they occur."
+		},
+		{
+			"name": "Pickup points",
+			"item": [
+				{
+					"name": "Get locations",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "",
+								"type": "text"
+							},
+							{
+								"key": "X-Amz-Date",
+								"value": "20210506T134832Z",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{host}}/locations?lat=-25.785641&lng=28.278871&stacked_height=5&stacked_width=38&stacked_length=40&total_weight=2",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"locations"
+							],
+							"query": [
+								{
+									"key": "lat",
+									"value": "-25.785641"
+								},
+								{
+									"key": "lng",
+									"value": "28.278871"
+								},
+								{
+									"key": "stacked_height",
+									"value": "5"
+								},
+								{
+									"key": "stacked_width",
+									"value": "38"
+								},
+								{
+									"key": "stacked_length",
+									"value": "40"
+								},
+								{
+									"key": "total_weight",
+									"value": "2"
+								}
+							]
+						},
+						"description": "Retrieve available locations based on a specific location, proximity to an address, or a map bounding box.  \n  \nOptional parcel dimensions and weight can be supplied to filter locations that can accommodate the parcel(s).\n\n### Location selection parameters\n\nThese are the different methods to get available locations:\n\n**1\\. Get a specific location by ID**\n\n- Requires `location_id`\n    \n- Requires `provider_slug`\n    \n\n**2\\. Get locations near a specific address**\n\n- Requires **both** `lat` and `lng`\n    \n\n**3\\. Get locations within a map area (bounding box)**\n\n- Requires **all four** of:\n    \n    - `min_lat`, `max_lat`\n        \n    - `min_lng`, `max_lng`\n        \n\nAvailable parameters:\n\n| **Name** | **Description** | **Required** |\n| --- | --- | --- |\n| `location_id` | The ID of a specific location. | Required when fetching a single location |\n| `provider_slug` | If you want locations (or a location by ID) for a specific provider. | Required when using `location_id` |\n| `lat` | Latitude of an address to search around. | Required with `lng` |\n| `lng` | Longitude of an address to search around. | Required with `lat` |\n| `min_lat` | Minimum latitude of bounding box. | Required for bounding box search |\n| `max_lat` | Maximum latitude of bounding box. | Required for bounding box search |\n| `min_lng` | Minimum longitude of bounding box. | Required for bounding box search |\n| `max_lng` | Maximum longitude of bounding box. | Required for bounding box search |\n\n### Parcel constraint filters (optional)\n\nThese parameters are optional and are used to filter out locations that cannot accommodate the parcel(s). If multiple parcels are used, dimensions should represent the stacked dimensions.\n\n| **Name** | **Description** |\n| --- | --- |\n| `stacked_height` | Total stacked height of all parcels (or height of a single parcel). |\n| `stacked_width` | Total stacked width of all parcels (or width of a single parcel). |\n| `stacked_length` | Total stacked length of all parcels (or length of a single parcel). |\n| `total_weight` | Total combined weight of all parcels. |\n\n### Validation rules\n\n- `lat` and `lng` must be provided together\n    \n- Bounding box searches require **all four** of:\n    \n    - `min_lat`, `max_lat`, `min_lng`, `max_lng`\n        \n- Address searches (`lat`/`lng`) and bounding box searches cannot be combined\n    \n- `location_id` cannot be combined with coordinate-based searches\n    \n- `provider_slug` is required when using `location_id`"
+					},
+					"response": []
+				}
+			],
+			"description": "The pickup points feature expands the flexibility of the Bob Go API by enabling shipments to or from designated locker and counter locations. Pickup points can serve as either the collection or delivery address in a shipment.\n\nPickup points integrate seamlessly into the existing **Rates at checkout**, **Rates**, and **Shipments** endpoints, with a few additional fields required to identify and manage pickup point locations.\n\n#### Scenarios and Workflow\n\nThere are two main ways to use pickup points within your shipping flow:\n\n#### 1\\. Rates at checkout (RAC) flow\n\nWhen a buyer selects a pickup point rate at checkout:\n\n- A **Rates at checkout** call is made, returning pickup point options.\n    \n- The selected RAC rate includes a `pickup_point_location_id` identifying the specific pickup point, as well as the `provider_slug` showing the linked provider/courier.\n    \n- When a rates call is made, the same `pickup_point_location_id` must be provided in the payload, together with the `pickup_point_provider_slug`.\n    \n- When the shipment is created for that rate, the same `pickup_point_location_id` and `provider_slug` must again be included in the shipment payload.\n    \n\nExample of a RAC rate response including pickup point data:\n\n``` json\n{\n\"id\": 1731,\n\"service_name\": \"Bob Box Locker – Shiplogic Locker Test (approx. 0.0 km)\",\n\"service_code\": \"bobgo_PP_1731_102_107_2\",\n\"total_price\": 44.61,\n\"type\": \"pickup-point\",\n\"pickup_point_location_id\": 107,\n\"provider_slug\": \"demo\",\n\"service_level_code\": \"BOXL-S\"\n}\n\n ```\n\nTake note of `pickup_point_location_id` and `provider_slug` in the response.\n\n#### 2\\. Get locations flow\n\nThis flow is used when the merchant retrieves pickup point locations rather than relying on rates during checkout.\n\n1. Retrieve available pickup point locations for a specific area using latitude, longitude, and parcel stacked dimensions. Each location in the response includes a unique `id` (to be used in conjunction with a `provider_slug)` used to identify that pickup point.\n    \n2. Use the location `id` as the `pickup_point_location_id` to fetch rates for that specific pickup point, as well as the `provider_slug` as `pickup_point_provider_slug`.\n    \n3. When booking the shipment, include the same `pickup_point_location_id` used in the rate request, as well as `provider_slug`.\n    \n\n### Required fields for getting rates\n\nDepending on whether the pickup point is used for **collection** or **delivery**, different fields apply:\n\n| Scenario | Required fields | **Notes** |\n| --- | --- | --- |\n| Pickup point to door - Used when the parcel is collected from a pickup point. | `collection_pickup_point_location_id` and `pickup_point_provider_slug` |  |\n| Door to pickup point - Used when the parcel is delivered to a pickup point. | `delivery_pickup_point_location_id` and `pickup_point_provider_slug` |  |\n| Pickup point to Pickup point - Used when both the collection and delivery are pickup points. | `collection_pickup_point_location_id` and `delivery_pickup_point_location_id` and `pickup_point_provider_slug` | The collection and delivery location IDs must both belong to the same provider/courier, to get accurate rates. A shipment cannot be booked to two different locations, where the locations are serviced by different couriers. |\n\n### Required fields for creating a shipment\n\nDepending on whether the pickup point is used for **collection** or **delivery**, different fields apply:\n\n| Scenario | Required fields | **Notes** |\n| --- | --- | --- |\n| Pickup point to door - Used when the parcel is collected from a pickup point. | `collection_pickup_point_location_id` and `provider_slug` |  |\n| Door to pickup point - Used when the parcel is delivered to a pickup point. | `delivery_pickup_point_location_id` and `provider_slug` |  |\n| Pickup point to Pickup point - Used when both the collection and delivery are pickup points. | `collection_pickup_point_location_id` and `delivery_pickup_point_location_id` and `provider_slug` | The collection and delivery location IDs must both belong to the same provider/courier, to get accurate rates. A shipment cannot be booked to two different locations, where the locations are serviced by different couriers. |"
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "0bf2f1c261d34a57b8a356cd5b9dab43",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "host",
+			"value": "https://api.sandbox.bobgo.co.za/v2"
+		}
+	]
+}
