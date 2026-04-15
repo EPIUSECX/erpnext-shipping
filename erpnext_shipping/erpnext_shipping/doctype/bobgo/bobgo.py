@@ -300,7 +300,7 @@ class BobGoUtils:
 
 		return {
 			"awb_number": ", ".join(awb_numbers),
-			"tracking_status": ", ".join(filter(None, tracking_statuses)),
+			"tracking_status": self.normalize_erpnext_tracking_status(tracking_statuses),
 			"tracking_status_info": ", ".join(filter(None, tracking_status_info)),
 			"tracking_url": "",
 		}
@@ -400,6 +400,25 @@ class BobGoUtils:
 			return ""
 		return status.replace("-", " ").title()
 
+	def normalize_erpnext_tracking_status(self, tracking_statuses: list[str]) -> str:
+		if not tracking_statuses:
+			return ""
+
+		normalized_statuses = [status.lower() for status in tracking_statuses if status]
+		if not normalized_statuses:
+			return ""
+
+		if any("deliver" in status for status in normalized_statuses):
+			return "Delivered"
+		if any("return" in status for status in normalized_statuses):
+			return "Returned"
+		if any("lost" in status for status in normalized_statuses):
+			return "Lost"
+
+		# Bob Go statuses such as pending-collection, collected, in-transit, and
+		# out-for-delivery all map cleanly onto ERPNext's generic in-progress state.
+		return "In Progress"
+
 	def normalize_tracking_response(self, response_data: Any, tracking_reference: str) -> dict:
 		if isinstance(response_data, dict):
 			return response_data
@@ -442,6 +461,10 @@ class BobGoUtils:
 		content_type = (response.headers.get("Content-Type") or "").lower()
 		if "application/json" in content_type:
 			payload = response.json()
+			download_url = payload.get("download_url")
+			if download_url:
+				return self.download_label(download_url, tracking_references)
+
 			for key in ("data", "content", "pdf", "file_content", "waybill"):
 				value = payload.get(key)
 				if isinstance(value, str):
@@ -467,6 +490,31 @@ class BobGoUtils:
 			),
 		)
 		return content
+
+	def download_label(self, download_url: str, tracking_references: list[str]) -> bytes:
+		# Bob Go returns a signed S3 URL for the final PDF rather than the PDF bytes
+		# directly from the waybill endpoint.
+		response = requests.get(download_url, timeout=60)
+		try:
+			response.raise_for_status()
+		except HTTPError:
+			frappe.log_error(
+				title="Bob Go Label Debug",
+				message=json.dumps(
+					{
+						"tracking_references": tracking_references,
+						"download_url": download_url,
+						"status_code": response.status_code,
+						"headers": dict(response.headers),
+						"content_preview": response.text[:500],
+					},
+					indent=2,
+					default=str,
+				),
+			)
+			frappe.throw(_("Bob Go label download failed."), title=_("Bob Go"))
+
+		return response.content or b""
 
 	def decode_possible_base64(self, value: str | None) -> bytes | None:
 		if not value:
