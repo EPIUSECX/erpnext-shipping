@@ -123,12 +123,14 @@ def verify_bobgo_webhook_request():
 		frappe.throw(_("Bob Go webhook secret is not configured."), title=_("Bob Go"))
 
 	provided_secret = (
-		frappe.form_dict.get("secret")
-		or frappe.get_request_header("X-BobGo-Webhook-Secret")
+		frappe.get_request_header("X-BobGo-Webhook-Secret")
 		or frappe.get_request_header("X-Bobgo-Webhook-Secret")
 	)
 	if not provided_secret or not hmac.compare_digest(str(provided_secret), str(expected_secret)):
-		frappe.throw(_("Invalid Bob Go webhook secret."), title=_("Bob Go"))
+		frappe.throw(
+			_("Invalid Bob Go webhook secret. Please send it in the X-BobGo-Webhook-Secret header."),
+			title=_("Bob Go"),
+		)
 
 
 def get_bobgo_webhook_payload() -> dict:
