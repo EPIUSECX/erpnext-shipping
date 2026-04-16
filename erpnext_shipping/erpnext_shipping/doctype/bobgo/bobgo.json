@@ -12,7 +12,11 @@
   "webhook_secret",
   "default_timeout_ms",
   "copy_tracking_update_url",
-  "copy_shipment_submission_status_update_url"
+  "copy_shipment_submission_status_update_url",
+  "subscribe_webhooks",
+  "tracking_webhook_subscribed",
+  "shipment_submission_status_webhook_subscribed",
+  "refresh_webhook_status"
  ],
  "fields": [
   {
@@ -55,13 +59,37 @@
    "fieldtype": "Button",
    "label": "Copy Shipment Submission Status Update URL",
    "read_only": 1
+  },
+  {
+   "fieldname": "subscribe_webhooks",
+   "fieldtype": "Button",
+   "label": "Subscribe Webhooks"
+  },
+  {
+   "default": "0",
+   "fieldname": "tracking_webhook_subscribed",
+   "fieldtype": "Check",
+   "label": "Tracking Webhook Subscribed?",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "shipment_submission_status_webhook_subscribed",
+   "fieldtype": "Check",
+   "label": "Shipment Submission Status Webhook Subscribed?",
+   "read_only": 1
+  },
+  {
+   "fieldname": "refresh_webhook_status",
+   "fieldtype": "Button",
+   "label": "Refresh Webhook Status"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-04-16 09:43:04.980080",
+ "modified": "2026-04-16 11:41:02.119505",
  "modified_by": "Administrator",
  "module": "ERPNext Shipping",
  "name": "BobGo",

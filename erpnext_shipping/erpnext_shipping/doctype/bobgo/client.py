@@ -17,7 +17,14 @@ from requests.exceptions import HTTPError
 
 from erpnext_shipping.erpnext_shipping.utils import show_error_alert
 
-from .constants import BOBGO_PROVIDER, FAILED_SUBMISSION_STATUSES, PROD_BASE_URL, TEST_BASE_URL
+from .constants import (
+	BOBGO_PROVIDER,
+	FAILED_SUBMISSION_STATUSES,
+	PROD_BASE_URL,
+	SUBMISSION_STATUS_WEBHOOK_TOPIC,
+	TEST_BASE_URL,
+	TRACKING_WEBHOOK_TOPIC,
+)
 from .helpers import (
 	format_tracking_status,
 	normalize_erpnext_tracking_status,
@@ -474,3 +481,31 @@ class BobGoUtils:
 
 def get_bobgo_utils() -> "BobGoUtils":
 	return BobGoUtils()
+
+
+def normalize_webhook_subscriptions(response_data: Any) -> list[dict]:
+	if isinstance(response_data, list):
+		return [subscription for subscription in response_data if isinstance(subscription, dict)]
+
+	if isinstance(response_data, dict):
+		for key in ("webhook_subscriptions", "data", "results"):
+			value = response_data.get(key)
+			if isinstance(value, list):
+				return [subscription for subscription in value if isinstance(subscription, dict)]
+
+	return []
+
+
+def get_expected_webhook_subscriptions(tracking_url: str, submission_url: str) -> list[dict]:
+	return [
+		{
+			"delivery_url": tracking_url,
+			"topic": TRACKING_WEBHOOK_TOPIC,
+			"status": "active",
+		},
+		{
+			"delivery_url": submission_url,
+			"topic": SUBMISSION_STATUS_WEBHOOK_TOPIC,
+			"status": "active",
+		},
+	]
