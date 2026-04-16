@@ -9,7 +9,10 @@
   "enabled",
   "use_test_environment",
   "bearer_token",
-  "default_timeout_ms"
+  "webhook_secret",
+  "default_timeout_ms",
+  "copy_tracking_update_url",
+  "copy_shipment_submission_status_update_url"
  ],
  "fields": [
   {
@@ -35,13 +38,30 @@
    "fieldname": "default_timeout_ms",
    "fieldtype": "Int",
    "label": "Default Timeout ms"
+  },
+  {
+   "fieldname": "webhook_secret",
+   "fieldtype": "Password",
+   "label": "Webhook Secret"
+  },
+  {
+   "fieldname": "copy_tracking_update_url",
+   "fieldtype": "Button",
+   "label": "Copy Tracking Update URL",
+   "read_only": 1
+  },
+  {
+   "fieldname": "copy_shipment_submission_status_update_url",
+   "fieldtype": "Button",
+   "label": "Copy Shipment Submission Status Update URL",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-04-15 13:31:51.846840",
+ "modified": "2026-04-16 09:43:04.980080",
  "modified_by": "Administrator",
  "module": "ERPNext Shipping",
  "name": "BobGo",
