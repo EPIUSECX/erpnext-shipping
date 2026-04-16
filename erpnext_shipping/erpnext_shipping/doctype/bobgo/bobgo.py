@@ -5,6 +5,8 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import get_url
+from frappe.utils.password import get_decrypted_password
+from urllib.parse import quote
 
 from .client import (
 	BobGoUtils,
@@ -73,22 +75,25 @@ def refresh_webhook_status():
 
 
 def get_bobgo_webhook_url(webhook_type: str) -> str:
-	settings = frappe.get_single("BobGo")
-	if not settings.get_password("webhook_secret"):
+	webhook_secret = get_decrypted_password("BobGo", "BobGo", "webhook_secret")
+	if not webhook_secret:
 		frappe.throw(_("Please set the Bob Go Webhook Secret first."), title=_("Bob Go"))
 
 	base_url = get_url().rstrip("/")
+	secret = quote(webhook_secret, safe="")
 
 	if webhook_type == "tracking":
 		return (
 			f"{base_url}/api/method/"
 			"erpnext_shipping.erpnext_shipping.doctype.bobgo.bobgo.handle_tracking_webhook"
+			f"?secret={secret}"
 		)
 
 	if webhook_type == "submission":
 		return (
 			f"{base_url}/api/method/"
 			"erpnext_shipping.erpnext_shipping.doctype.bobgo.bobgo.handle_submission_status_webhook"
+			f"?secret={secret}"
 		)
 
 	frappe.throw(_("Unknown Bob Go webhook type: {0}").format(webhook_type), title=_("Bob Go"))

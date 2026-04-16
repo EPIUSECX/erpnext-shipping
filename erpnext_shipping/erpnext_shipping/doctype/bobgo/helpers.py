@@ -71,9 +71,9 @@ def get_bobgo_tracking_status_info(payload: dict) -> str:
 	checkpoints = payload.get("checkpoints") or []
 	latest_checkpoint = checkpoints[0] if checkpoints else {}
 	return (
-		latest_checkpoint.get("message")
+		payload.get("status_friendly")
 		or latest_checkpoint.get("status_friendly")
-		or payload.get("status_friendly")
+		or latest_checkpoint.get("message")
 		or payload.get("status")
 		or ""
 	)

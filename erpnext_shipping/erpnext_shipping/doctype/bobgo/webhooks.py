@@ -84,7 +84,13 @@ def handle_submission_status_webhook():
 	tracking_status = normalize_erpnext_tracking_status(
 		[payload.get("status") or payload.get("status_friendly")]
 	)
-	tracking_status_info = payload.get("failed_reason") or payload.get("status") or submission_status or ""
+	tracking_status_info = (
+		payload.get("failed_reason")
+		or payload.get("status_friendly")
+		or format_tracking_status(payload.get("status"))
+		or submission_status
+		or ""
+	)
 
 	update_values = {
 		"shipment_id": shipment_identifier or shipment_doc.shipment_id,
@@ -123,14 +129,24 @@ def verify_bobgo_webhook_request():
 		frappe.throw(_("Bob Go webhook secret is not configured."), title=_("Bob Go"))
 
 	provided_secret = (
-		frappe.get_request_header("X-BobGo-Webhook-Secret")
+		get_query_param("secret")
+		or frappe.get_request_header("X-BobGo-Webhook-Secret")
 		or frappe.get_request_header("X-Bobgo-Webhook-Secret")
 	)
 	if not provided_secret or not hmac.compare_digest(str(provided_secret), str(expected_secret)):
 		frappe.throw(
-			_("Invalid Bob Go webhook secret. Please send it in the X-BobGo-Webhook-Secret header."),
+			_("Invalid Bob Go webhook secret."),
 			title=_("Bob Go"),
 		)
+
+
+def get_query_param(key: str) -> str | None:
+	values = frappe.request.args.getlist(key)
+	if values:
+		return values[-1]
+
+	value = frappe.request.args.get(key)
+	return value if value else None
 
 
 def get_bobgo_webhook_payload() -> dict:
